@@ -31,9 +31,9 @@ public class Response implements Serializable {
 
   private long id;
   private Object result;
-  private Throwable exc;
+  private Throwable exception;
 
   public boolean hasError() {
-    return exc != null;
+    return exception != null;
   }
 }
