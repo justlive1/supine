@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 justlive1
+ *  Copyright (C) 2019 justlive1
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at
@@ -12,30 +12,30 @@
  *  the License.
  */
 
-package vip.justlive.supine.client;
+package vip.justlive.supine.router;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import vip.justlive.oxygen.core.constant.Constants;
+import lombok.experimental.UtilityClass;
+import vip.justlive.oxygen.core.exception.Exceptions;
+import vip.justlive.supine.protocol.ClientConfig;
 
 /**
- * 客户端注解，标记在接口上
+ * router 工厂
  *
  * @author wubo
  */
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Reference {
+@UtilityClass
+public class RouterFactory {
 
   /**
-   * 接口版本号
+   * 构建Router
    *
-   * @return version
+   * @param config 配置
+   * @return router
    */
-  String version() default Constants.EMPTY;
-
+  public static Router create(ClientConfig config) {
+    if (config.getRegistryAddress() == null || config.getRegistryAddress().trim().isEmpty()) {
+      throw Exceptions.fail("registryAddress 不能为空");
+    }
+    return new DirectRouter(config);
+  }
 }

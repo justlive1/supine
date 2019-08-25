@@ -14,6 +14,8 @@
 
 package vip.justlive.supine.transport;
 
+import java.io.IOException;
+
 /**
  * 服务端传输
  *
@@ -21,7 +23,17 @@ package vip.justlive.supine.transport;
  */
 public interface ServerTransport {
 
-  void start(String host, int port);
+  /**
+   * 启动
+   *
+   * @param host 主机
+   * @param port 端口
+   * @throws IOException io异常
+   */
+  void start(String host, int port) throws IOException;
 
+  /**
+   * 停止
+   */
   void stop();
 }

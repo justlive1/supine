@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 justlive1
+ *  Copyright (C) 2019 justlive1
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at
@@ -12,30 +12,30 @@
  *  the License.
  */
 
-package vip.justlive.supine.client;
+package vip.justlive.supine.protocol;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import vip.justlive.oxygen.core.constant.Constants;
+import lombok.Data;
 
 /**
- * 客户端注解，标记在接口上
+ * 配置
  *
  * @author wubo
  */
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Reference {
+@Data
+public class Config {
 
   /**
-   * 接口版本号
-   *
-   * @return version
+   * 超时时间，单位秒
    */
-  String version() default Constants.EMPTY;
+  private int timeout = 5;
+
+  /**
+   * 注册类型，0：直连
+   */
+  private int registryType = 0;
+  /**
+   * 注册地址
+   */
+  private String registryAddress;
 
 }

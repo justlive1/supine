@@ -14,28 +14,44 @@
 
 package vip.justlive.supine.service;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
+import lombok.Data;
 import vip.justlive.oxygen.core.constant.Constants;
 import vip.justlive.oxygen.core.exception.Exceptions;
-import vip.justlive.supine.protocol.Request;
-import vip.justlive.supine.protocol.Response;
+import vip.justlive.supine.protocol.ServiceConfig;
+import vip.justlive.supine.transport.ServerTransport;
+import vip.justlive.supine.transport.impl.AioServerTransport;
 
 /**
  * 服务代理工厂
  *
  * @author wubo
  */
+@Data
 public class ServiceFactory {
 
-  private static final Map<ServiceMethodKey, ServiceMethodInvoker> SERVICES = new HashMap<>(4);
+  private final ServiceConfig config;
 
-  public static void register(Object service) {
+  private ServerTransport transport;
+  private volatile boolean state;
+
+  /**
+   * 注册服务
+   *
+   * @param service 服务实现
+   */
+  public void register(Object service) {
     register(service, Constants.EMPTY);
   }
 
-  public static void register(Object service, String version) {
+  /**
+   * 注册服务
+   *
+   * @param service 服务实现
+   * @param version 服务版本
+   */
+  public void register(Object service, String version) {
     Class<?> serviceType = service.getClass();
     Class<?>[] interfaces = serviceType.getInterfaces();
     if (interfaces == null || interfaces.length == 0) {
@@ -45,45 +61,68 @@ public class ServiceFactory {
       if (intf.getClassLoader() != null && intf.getName().startsWith("java.")) {
         continue;
       }
-      register(intf, service);
+      register(intf, service, version);
     }
   }
 
-  public static void register(Class<?> interfaceType, Object service) {
+  /**
+   * 注册服务，指定接口
+   *
+   * @param interfaceType 接口类型
+   * @param service 服务实现
+   */
+  public void register(Class<?> interfaceType, Object service) {
     register(interfaceType, service, Constants.EMPTY);
   }
 
-  public static void register(Class<?> interfaceType, Object service, String version) {
+  /**
+   * 注册服务，指定接口和版本
+   *
+   * @param interfaceType 接口类型
+   * @param service 服务实现
+   * @param version 版本
+   */
+  public void register(Class<?> interfaceType, Object service, String version) {
     Method[] methods = interfaceType.getDeclaredMethods();
-    if (methods == null || methods.length == 0) {
+    if (methods.length == 0) {
       return;
     }
     Class<?> clazz = service.getClass();
     try {
       for (Method method : methods) {
         Method realMethod = clazz.getDeclaredMethod(method.getName(), method.getParameterTypes());
-        SERVICES.put(new ServiceMethodKey(version, interfaceType.getName(), method.getName(),
-            method.getParameterTypes()), new ServiceMethodInvoker(service, realMethod));
+        ServiceMethodInvoker.add(
+            new ServiceMethodKey(version, interfaceType.getName(), method.getName(),
+                method.getParameterTypes()), service, realMethod);
       }
     } catch (NoSuchMethodException e) {
       throw Exceptions.wrap(e);
     }
   }
 
-  public static Response invoke(Request request) {
-    ServiceMethodKey key = new ServiceMethodKey(request.getVersion(), request.getClassName(),
-        request.getMethodName(), request.getArgTypes());
-    ServiceMethodInvoker invoker = SERVICES.get(key);
-    Response response = new Response().setId(request.getId());
-    if (invoker == null) {
-      response.setException(Exceptions.fail("service not found"));
-    } else {
-      try {
-        response.setResult(invoker.invoke(request.getArgs()));
-      } catch (Throwable e) {
-        response.setException(e);
-      }
+  /**
+   * 启动
+   *
+   * @throws IOException io异常时抛出
+   */
+  public synchronized void start() throws IOException {
+    if (state) {
+      return;
     }
-    return response;
+    state = true;
+    transport = new AioServerTransport();
+    transport.start(config.getHost(), config.getPort());
+  }
+
+  /**
+   * 停止
+   */
+  public synchronized void stop() {
+    if (!state) {
+      return;
+    }
+    state = false;
+    transport.stop();
+    ServiceMethodInvoker.clear();
   }
 }

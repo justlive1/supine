@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 justlive1
+ *  Copyright (C) 2019 justlive1
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at
@@ -12,30 +12,23 @@
  *  the License.
  */
 
-package vip.justlive.supine.client;
+package vip.justlive.supine.service;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import vip.justlive.oxygen.core.constant.Constants;
+import java.io.IOException;
+import org.junit.Test;
+import vip.justlive.supine.SayImpl;
+import vip.justlive.supine.protocol.ServiceConfig;
 
 /**
- * 客户端注解，标记在接口上
- *
  * @author wubo
  */
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Reference {
+public class ServiceFactoryTest {
 
-  /**
-   * 接口版本号
-   *
-   * @return version
-   */
-  String version() default Constants.EMPTY;
-
+  @Test
+  public void test() throws IOException {
+    ServiceConfig config = new ServiceConfig("localhost", 10086);
+    ServiceFactory factory = new ServiceFactory(config);
+    factory.register(new SayImpl());
+    factory.start();
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 justlive1
+ *  Copyright (C) 2019 justlive1
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at
@@ -12,30 +12,23 @@
  *  the License.
  */
 
-package vip.justlive.supine.client;
+package vip.justlive.supine;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import vip.justlive.oxygen.core.constant.Constants;
+
+import vip.justlive.oxygen.core.domain.RespVo;
 
 /**
- * 客户端注解，标记在接口上
- *
  * @author wubo
  */
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Reference {
+public class SayImpl implements Say {
 
-  /**
-   * 接口版本号
-   *
-   * @return version
-   */
-  String version() default Constants.EMPTY;
+  @Override
+  public RespVo<String> hello(String msg) {
+    return RespVo.success(msg);
+  }
 
+  @Override
+  public int echo(Type type) {
+    return type.getCode();
+  }
 }

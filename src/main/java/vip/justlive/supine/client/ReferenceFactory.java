@@ -18,6 +18,9 @@ import java.lang.reflect.Proxy;
 import vip.justlive.oxygen.core.constant.Constants;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.MoreObjects;
+import vip.justlive.supine.protocol.ClientConfig;
+import vip.justlive.supine.router.Router;
+import vip.justlive.supine.router.RouterFactory;
 
 /**
  * 客户端服务工厂
@@ -26,6 +29,15 @@ import vip.justlive.oxygen.core.util.MoreObjects;
  */
 public class ReferenceFactory {
 
+  private final ClientConfig config;
+  private final Router router;
+  private volatile boolean state;
+
+  public ReferenceFactory(ClientConfig config) {
+    this.config = config;
+    this.router = RouterFactory.create(config);
+  }
+
   /**
    * 创建服务代理
    *
@@ -33,14 +45,14 @@ public class ReferenceFactory {
    * @param <T> 接口类型
    * @return bean
    */
-  public static <T> T create(Class<T> referenceType) {
+  public <T> T create(Class<T> referenceType) {
     MoreObjects.notNull(referenceType, "referenceType不能为空");
     if (!referenceType.isInterface()) {
       throw Exceptions.fail(String.format("%s不是接口类型", referenceType));
     }
     Reference reference = referenceType.getAnnotation(Reference.class);
     if (reference != null) {
-      return create(referenceType, reference.address(), reference.version());
+      return create(referenceType, reference.version());
     }
     return create(referenceType, Constants.EMPTY);
   }
@@ -49,26 +61,34 @@ public class ReferenceFactory {
    * 创建服务代理
    *
    * @param referenceType 需要创建的接口类
-   * @param address 远程服务地址
-   * @param <T> 接口类型
-   * @return bean
-   */
-  public static <T> T create(Class<T> referenceType, String address) {
-    return create(referenceType, address, Constants.EMPTY);
-  }
-
-  /**
-   * 创建服务代理
-   *
-   * @param referenceType 需要创建的接口类
-   * @param address 远程服务地址
    * @param version 服务版本
    * @param <T> 接口类型
    * @return bean
    */
-  public static <T> T create(Class<T> referenceType, String address, String version) {
+  public <T> T create(Class<T> referenceType, String version) {
     return referenceType.cast(Proxy
         .newProxyInstance(referenceType.getClassLoader(), new Class[]{referenceType},
-            new ReferenceProxy(address, version)));
+            new ReferenceProxy(version, config, router)));
   }
+
+  /**
+   * 启动
+   */
+  public void start() {
+    if (state) {
+      return;
+    }
+    state = true;
+  }
+
+  /**
+   * 停止
+   */
+  public void stop() {
+    if (!state) {
+      return;
+    }
+    state = false;
+  }
+
 }

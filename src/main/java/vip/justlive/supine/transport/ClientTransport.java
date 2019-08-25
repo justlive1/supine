@@ -14,6 +14,8 @@
 
 package vip.justlive.supine.transport;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import vip.justlive.supine.protocol.Request;
 
 /**
@@ -23,9 +25,41 @@ import vip.justlive.supine.protocol.Request;
  */
 public interface ClientTransport {
 
-  void start(String host, int port);
+  /**
+   * 连接服务端
+   *
+   * @param host 主机
+   * @param port 端口
+   * @throws IOException io异常时抛出
+   */
+  default void connect(String host, int port) throws IOException {
+    connect(new InetSocketAddress(host, port));
+  }
 
+  /**
+   * 连接服务器
+   *
+   * @param address 地址
+   * @throws IOException io异常时抛出
+   */
+  void connect(InetSocketAddress address) throws IOException;
+
+  /**
+   * 关闭
+   */
   void close();
 
+  /**
+   * 是否已关闭
+   *
+   * @return true为停止
+   */
+  boolean isClosed();
+
+  /**
+   * 发送请求
+   *
+   * @param request 请求
+   */
   void send(Request request);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 justlive1
+ *  Copyright (C) 2019 justlive1
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at
@@ -12,30 +12,13 @@
  *  the License.
  */
 
-package vip.justlive.supine.client;
-
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import vip.justlive.oxygen.core.constant.Constants;
+package vip.justlive.supine.registry;
 
 /**
- * 客户端注解，标记在接口上
+ * 服务注册
  *
  * @author wubo
  */
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Reference {
-
-  /**
-   * 接口版本号
-   *
-   * @return version
-   */
-  String version() default Constants.EMPTY;
+public interface Registry {
 
 }

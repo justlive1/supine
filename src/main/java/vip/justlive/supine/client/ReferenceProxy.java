@@ -20,7 +20,16 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import lombok.Data;
+import vip.justlive.oxygen.core.util.SnowflakeIdWorker;
+import vip.justlive.supine.protocol.Config;
+import vip.justlive.supine.protocol.Request;
+import vip.justlive.supine.protocol.Response;
+import vip.justlive.supine.protocol.ResultFutures;
+import vip.justlive.supine.router.Router;
+import vip.justlive.supine.transport.ClientTransport;
 
 /**
  * 客户端服务接口代理
@@ -30,12 +39,42 @@ import lombok.Data;
 @Data
 public class ReferenceProxy implements InvocationHandler {
 
-  private final String address;
   private final String version;
+  private final Config config;
+  private final Router router;
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    return null;
+
+    if (Object.class.equals(method.getDeclaringClass())) {
+      return method.invoke(this, args);
+    }
+
+    if (isDefaultMethod(method)) {
+      return invokeDefaultMethod(proxy, method, args);
+    }
+
+    Request request = new Request().setVersion(version)
+        .setClassName(method.getDeclaringClass().getName()).setMethodName(method.getName())
+        .setArgTypes(method.getParameterTypes()).setArgs(args)
+        .setId(SnowflakeIdWorker.defaultNextId());
+
+    ClientTransport transport = router.route(request);
+
+    CompletableFuture<Response> future = new CompletableFuture<>();
+    ResultFutures.add(request.getId(), future);
+    transport.send(request);
+
+    try {
+      Response response = future.get(config.getTimeout(), TimeUnit.SECONDS);
+      if (response.hasError()) {
+        throw response.getException();
+      } else {
+        return response.getResult();
+      }
+    } finally {
+      ResultFutures.remove(request.getId());
+    }
   }
 
   private boolean isDefaultMethod(Method method) {
