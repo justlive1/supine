@@ -14,7 +14,6 @@
 
 package vip.justlive.supine.router;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Random;
@@ -55,11 +54,15 @@ public abstract class AbstractRouter implements Router {
     if (index == -1) {
       index = random.nextInt(size);
     }
-    InetSocketAddress address = socketAddresses.get(index);
-    ClientTransport transport = get(address);
-
-    index = (index + 1) % socketAddresses.size();
-    return transport;
+    for (int i = 0; i < size; i++) {
+      InetSocketAddress address = socketAddresses.get(index);
+      ClientTransport transport = get(address);
+      index = (index + 1) % socketAddresses.size();
+      if (transport != null && !transport.isClosed()) {
+        return transport;
+      }
+    }
+    throw Exceptions.fail("远程服务不可用");
   }
 
   private synchronized ClientTransport get(InetSocketAddress address) {
@@ -70,11 +73,12 @@ public abstract class AbstractRouter implements Router {
     transport = new AioClientTransport();
     try {
       transport.connect(address);
-    } catch (IOException e) {
-      throw Exceptions.wrap(e);
+      transports.put(address, transport);
+      return transport;
+    } catch (Exception e) {
+      log.warn("connect to {} error", address, e);
     }
-    transports.put(address, transport);
-    return transport;
+    return null;
   }
 
   private void expired(InetSocketAddress address, ClientTransport transport) {
