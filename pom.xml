@@ -19,8 +19,10 @@
 
     <junit.version>4.12</junit.version>
     <kryo.version>4.0.2</kryo.version>
+    <kryo-serializers.version>0.43</kryo-serializers.version>
+    <logback.version>1.2.3</logback.version>
     <lombok.version>1.18.8</lombok.version>
-    <oxygen.version>2.1.0</oxygen.version>
+    <oxygen.version>2.1.1</oxygen.version>
     <slf4j.version>1.7.26</slf4j.version>
 
     <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -163,6 +165,12 @@
     </dependency>
 
     <dependency>
+      <groupId>de.javakaffee</groupId>
+      <artifactId>kryo-serializers</artifactId>
+      <version>${kryo-serializers.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
@@ -173,6 +181,13 @@
       <artifactId>lombok</artifactId>
       <version>${lombok.version}</version>
       <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback.version}</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>

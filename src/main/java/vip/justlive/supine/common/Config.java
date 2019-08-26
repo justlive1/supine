@@ -12,24 +12,30 @@
  * the License.
  */
 
-package vip.justlive.supine.router;
+package vip.justlive.supine.common;
 
-import vip.justlive.supine.common.Request;
-import vip.justlive.supine.transport.ClientTransport;
+import lombok.Data;
 
 /**
- * 客户端路由
+ * 配置
  *
  * @author wubo
  */
-public interface Router {
+@Data
+public class Config {
 
   /**
-   * 选择路由
-   *
-   * @param request 请求
-   * @return 客户端传输
+   * 超时时间，单位秒
    */
-  ClientTransport route(Request request);
+  private int timeout = 5;
+
+  /**
+   * 注册类型，0：直连
+   */
+  private int registryType = 0;
+  /**
+   * 注册地址
+   */
+  private String registryAddress;
 
 }

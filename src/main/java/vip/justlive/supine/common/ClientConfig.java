@@ -12,24 +12,22 @@
  * the License.
  */
 
-package vip.justlive.supine.router;
+package vip.justlive.supine.common;
 
-import vip.justlive.supine.common.Request;
-import vip.justlive.supine.transport.ClientTransport;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
- * 客户端路由
+ * 客户端配置
  *
  * @author wubo
  */
-public interface Router {
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class ClientConfig extends Config {
 
   /**
-   * 选择路由
-   *
-   * @param request 请求
-   * @return 客户端传输
+   * 空闲超时时间，单位秒
    */
-  ClientTransport route(Request request);
-
+  private int idleTimeout = 120;
 }

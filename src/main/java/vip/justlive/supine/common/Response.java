@@ -12,24 +12,28 @@
  * the License.
  */
 
-package vip.justlive.supine.router;
+package vip.justlive.supine.common;
 
-import vip.justlive.supine.common.Request;
-import vip.justlive.supine.transport.ClientTransport;
+import java.io.Serializable;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 /**
- * 客户端路由
+ * rpc response
  *
  * @author wubo
  */
-public interface Router {
+@Data
+@Accessors(chain = true)
+public class Response implements Serializable {
 
-  /**
-   * 选择路由
-   *
-   * @param request 请求
-   * @return 客户端传输
-   */
-  ClientTransport route(Request request);
+  private static final long serialVersionUID = 1L;
 
+  private long id;
+  private Object result;
+  private Throwable exception;
+
+  public boolean hasError() {
+    return exception != null;
+  }
 }

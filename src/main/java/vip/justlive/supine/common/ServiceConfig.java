@@ -12,24 +12,26 @@
  * the License.
  */
 
-package vip.justlive.supine.router;
+package vip.justlive.supine.common;
 
-import vip.justlive.supine.common.Request;
-import vip.justlive.supine.transport.ClientTransport;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
- * 客户端路由
+ * 服务端配置
  *
  * @author wubo
  */
-public interface Router {
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class ServiceConfig extends Config {
 
   /**
-   * 选择路由
-   *
-   * @param request 请求
-   * @return 客户端传输
+   * 绑定主机
    */
-  ClientTransport route(Request request);
-
+  private final String host;
+  /**
+   * 绑定端口
+   */
+  private final int port;
 }

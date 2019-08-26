@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2019 justlive1
+ * Copyright (C) 2019 the original author or authors.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software distributed under the License
- *  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- *  or implied. See the License for the specific language governing permissions and limitations under
- *  the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package vip.justlive.supine.client;
@@ -17,10 +17,11 @@ package vip.justlive.supine.client;
 import java.lang.reflect.Proxy;
 import vip.justlive.oxygen.core.constant.Constants;
 import vip.justlive.oxygen.core.exception.Exceptions;
+import vip.justlive.oxygen.core.util.ClassUtils;
 import vip.justlive.oxygen.core.util.MoreObjects;
-import vip.justlive.supine.protocol.ClientConfig;
+import vip.justlive.supine.common.ClientConfig;
+import vip.justlive.supine.router.DirectRouter;
 import vip.justlive.supine.router.Router;
-import vip.justlive.supine.router.RouterFactory;
 
 /**
  * 客户端服务工厂
@@ -34,9 +35,14 @@ public class ReferenceFactory {
   private volatile boolean state;
 
   public ReferenceFactory(ClientConfig config) {
-    this.config = config;
-    this.router = RouterFactory.create(config);
+    this(config, select(config));
   }
+
+  public ReferenceFactory(ClientConfig config, Router router) {
+    this.config = config;
+    this.router = router;
+  }
+
 
   /**
    * 创建服务代理
@@ -46,11 +52,11 @@ public class ReferenceFactory {
    * @return bean
    */
   public <T> T create(Class<T> referenceType) {
-    MoreObjects.notNull(referenceType, "referenceType不能为空");
+    MoreObjects.notNull(referenceType, "[referenceType]不能为空");
     if (!referenceType.isInterface()) {
-      throw Exceptions.fail(String.format("%s不是接口类型", referenceType));
+      throw Exceptions.fail(String.format("[%s]不是接口类型", referenceType));
     }
-    Reference reference = referenceType.getAnnotation(Reference.class);
+    Reference reference = ClassUtils.getAnnotation(referenceType, Reference.class);
     if (reference != null) {
       return create(referenceType, reference.version());
     }
@@ -68,7 +74,7 @@ public class ReferenceFactory {
   public <T> T create(Class<T> referenceType, String version) {
     return referenceType.cast(Proxy
         .newProxyInstance(referenceType.getClassLoader(), new Class[]{referenceType},
-            new ReferenceProxy(version, config, router)));
+            new ReferenceProxy(config, router, version)));
   }
 
   /**
@@ -91,4 +97,10 @@ public class ReferenceFactory {
     state = false;
   }
 
+  private static Router select(ClientConfig config) {
+    if (config.getRegistryAddress() == null || config.getRegistryAddress().trim().isEmpty()) {
+      throw Exceptions.fail("[registryAddress]不能为空");
+    }
+    return new DirectRouter(config);
+  }
 }

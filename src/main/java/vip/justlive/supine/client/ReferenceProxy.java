@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2019 justlive1
+ * Copyright (C) 2019 the original author or authors.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software distributed under the License
- *  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- *  or implied. See the License for the specific language governing permissions and limitations under
- *  the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package vip.justlive.supine.client;
@@ -24,10 +24,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.Data;
 import vip.justlive.oxygen.core.util.SnowflakeIdWorker;
-import vip.justlive.supine.protocol.Config;
-import vip.justlive.supine.protocol.Request;
-import vip.justlive.supine.protocol.Response;
-import vip.justlive.supine.protocol.ResultFutures;
+import vip.justlive.supine.common.ClientConfig;
+import vip.justlive.supine.common.Request;
+import vip.justlive.supine.common.Response;
+import vip.justlive.supine.common.ResultFutures;
 import vip.justlive.supine.router.Router;
 import vip.justlive.supine.transport.ClientTransport;
 
@@ -39,9 +39,9 @@ import vip.justlive.supine.transport.ClientTransport;
 @Data
 public class ReferenceProxy implements InvocationHandler {
 
-  private final String version;
-  private final Config config;
+  private final ClientConfig config;
   private final Router router;
+  private final String version;
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {

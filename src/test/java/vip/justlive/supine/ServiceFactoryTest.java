@@ -14,15 +14,30 @@
 
 package vip.justlive.supine;
 
-
-import vip.justlive.supine.client.Reference;
+import java.io.IOException;
+import org.junit.Test;
+import vip.justlive.supine.common.ServiceConfig;
+import vip.justlive.supine.service.ServiceFactory;
 
 /**
  * @author wubo
  */
-@Reference
-public interface Say {
+public class ServiceFactoryTest {
 
-  String hello(String msg);
-
+  @Test
+  public void test() throws IOException {
+    ServiceConfig config = new ServiceConfig("localhost", 10086);
+    ServiceFactory factory = new ServiceFactory(config);
+    factory.register(new SayImpl());
+    factory.register(new SayImpl2(), "2");
+    new Thread(() -> {
+      try {
+        Thread.sleep(10000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      factory.stop();
+    }).start();
+    factory.start();
+  }
 }
