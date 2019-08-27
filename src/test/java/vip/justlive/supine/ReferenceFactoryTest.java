@@ -14,6 +14,7 @@
 
 package vip.justlive.supine;
 
+import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
 import vip.justlive.oxygen.core.exception.CodedException;
@@ -29,7 +30,7 @@ public class ReferenceFactoryTest {
   private Say say;
 
   @Test
-  public void test() {
+  public void test() throws IOException {
 
     ClientConfig config = new ClientConfig();
     config.setRegistryAddress("localhost:10086");
