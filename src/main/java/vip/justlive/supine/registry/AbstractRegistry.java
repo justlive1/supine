@@ -15,8 +15,11 @@
 package vip.justlive.supine.registry;
 
 import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.ExpiringMap;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.transport.ClientTransport;
@@ -30,6 +33,7 @@ import vip.justlive.supine.transport.impl.AioClientTransport;
 @Slf4j
 public abstract class AbstractRegistry implements Registry {
 
+  private static final Random RANDOM = new Random();
   private ExpiringMap<InetSocketAddress, ClientTransport> transports;
 
   void init(ClientConfig config) {
@@ -38,7 +42,21 @@ public abstract class AbstractRegistry implements Registry {
         .scheduleDelay(config.getIdleTimeout()).asyncExpiredListeners(this::expired).build();
   }
 
-  synchronized ClientTransport get(InetSocketAddress address) {
+  ClientTransport load(List<InetSocketAddress> addresses) {
+    int size = addresses.size();
+    int index = RANDOM.nextInt(size);
+    for (int i = 0; i < size; i++) {
+      InetSocketAddress address = addresses.get(index);
+      ClientTransport transport = get(address);
+      index = (index + 1) % addresses.size();
+      if (transport != null && !transport.isClosed()) {
+        return transport;
+      }
+    }
+    throw Exceptions.fail("远程服务不可用");
+  }
+
+  private synchronized ClientTransport get(InetSocketAddress address) {
     ClientTransport transport = transports.get(address);
     if (transport != null && !transport.isClosed()) {
       return transport;

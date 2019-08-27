@@ -18,12 +18,17 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import vip.justlive.oxygen.core.exception.Exceptions;
+import vip.justlive.oxygen.core.util.ExpiringMap;
 import vip.justlive.oxygen.core.util.SystemUtils;
 import vip.justlive.oxygen.core.util.ThreadUtils;
 import vip.justlive.supine.codec.Serializer;
@@ -42,6 +47,9 @@ import vip.justlive.supine.transport.ClientTransport;
 @RequiredArgsConstructor
 public class MulticastRegistry extends AbstractRegistry {
 
+  private static final int BUFFER_SIZE = 64 * 1024;
+  private static final long INTERVAL = 1_000;
+
   private final List<RequestKey> keys = new CopyOnWriteArrayList<>();
   private final ServiceConfig serviceConfig;
   private final ClientConfig clientConfig;
@@ -49,6 +57,10 @@ public class MulticastRegistry extends AbstractRegistry {
   private DatagramPacket packet;
   private volatile boolean stopped;
   private ScheduledExecutorService schedule;
+
+  private ExpiringMap<InetSocketAddress, List<RequestKey>> services;
+  private Map<RequestKey, List<InetSocketAddress>> requestToService;
+
 
   public MulticastRegistry(ServiceConfig config) {
     this.serviceConfig = config;
@@ -58,6 +70,9 @@ public class MulticastRegistry extends AbstractRegistry {
   public MulticastRegistry(ClientConfig config) {
     this.serviceConfig = null;
     this.clientConfig = config;
+    this.services = ExpiringMap.<InetSocketAddress, List<RequestKey>>builder()
+        .expiration(INTERVAL * 2, TimeUnit.MILLISECONDS).build();
+    this.requestToService = new HashMap<>(2);
     super.init(config);
   }
 
@@ -73,7 +88,7 @@ public class MulticastRegistry extends AbstractRegistry {
 
   @Override
   public void start() throws IOException {
-    schedule = ThreadUtils.newScheduledExecutor(1, "registry");
+    schedule = ThreadUtils.newScheduledExecutor(2, "registry-%d");
     if (serviceConfig != null) {
       service(serviceConfig);
     } else if (clientConfig != null) {
@@ -89,20 +104,21 @@ public class MulticastRegistry extends AbstractRegistry {
     InetSocketAddress bindAddress = SystemUtils.parseAddress(address);
     socket = new MulticastSocket(bindAddress.getPort());
     socket.setReuseAddress(true);
-    socket.setReceiveBufferSize(64 * 1024);
-    socket.setSoTimeout(10_000);
+    socket.setReceiveBufferSize(BUFFER_SIZE);
+    socket.setSoTimeout((int) INTERVAL);
     socket.joinGroup(bindAddress.getAddress());
 
-    packet = new DatagramPacket(new byte[64 * 1024], 64 * 1024);
+    packet = new DatagramPacket(new byte[BUFFER_SIZE], BUFFER_SIZE);
     stopped = false;
     schedule.execute(new Receiver());
+    schedule.scheduleWithFixedDelay(this::refresh, INTERVAL, INTERVAL / 2, TimeUnit.MILLISECONDS);
   }
 
   private void service(ServiceConfig config) throws IOException {
     socket = new MulticastSocket();
     socket.setReuseAddress(true);
     socket.setTimeToLive(255);
-    socket.setSendBufferSize(64 * 1024);
+    socket.setSendBufferSize(BUFFER_SIZE);
 
     RegistryInfo registryInfo = new RegistryInfo().setHost(config.getHost())
         .setPort(config.getPort()).setKeys(keys);
@@ -113,7 +129,7 @@ public class MulticastRegistry extends AbstractRegistry {
     }
     packet = new DatagramPacket(data, data.length, SystemUtils.parseAddress(registryAddress));
     stopped = false;
-    schedule.schedule(new Sender(), 10, TimeUnit.SECONDS);
+    schedule.schedule(new Sender(), INTERVAL, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -127,11 +143,21 @@ public class MulticastRegistry extends AbstractRegistry {
 
   @Override
   public ClientTransport discovery(RequestKey key) {
-    return null;
+    List<InetSocketAddress> addresses = requestToService.get(key);
+    if (addresses == null) {
+      throw Exceptions.fail("没有可用的服务提供者");
+    }
+    return load(addresses);
   }
 
-  private void handleReceive() {
-
+  private void refresh() {
+    if (services == null) {
+      return;
+    }
+    Map<RequestKey, List<InetSocketAddress>> map = new HashMap<>(2);
+    services.forEach(
+        (k, v) -> v.forEach(item -> map.computeIfAbsent(item, rk -> new ArrayList<>()).add(k)));
+    requestToService = map;
   }
 
   private class Sender implements Runnable {
@@ -147,7 +173,7 @@ public class MulticastRegistry extends AbstractRegistry {
         log.warn("multicast registry send failed", e);
       }
       if (schedule != null) {
-        schedule.schedule(this, 10, TimeUnit.SECONDS);
+        schedule.schedule(this, INTERVAL, TimeUnit.MILLISECONDS);
       }
     }
   }
@@ -164,6 +190,19 @@ public class MulticastRegistry extends AbstractRegistry {
           // ignore
         }
       }
+    }
+
+    private void handleReceive() {
+      if (packet == null) {
+        return;
+      }
+      final byte[] data = packet.getData();
+      RegistryInfo info = (RegistryInfo) Serializer.def().decode(data);
+      if (info.getKeys() == null || info.getKeys().isEmpty()) {
+        return;
+      }
+      InetSocketAddress address = new InetSocketAddress(info.getHost(), info.getPort());
+      services.put(address, info.getKeys());
     }
   }
 }

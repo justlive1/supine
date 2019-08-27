@@ -137,7 +137,17 @@ public class ServiceFactory {
     transport = new AioServerTransport();
     transport.start(config.getHost(), config.getPort());
     if (registry != null) {
+      registry.register(ServiceMethodInvoker.requestKeys());
       registry.start();
+    }
+  }
+
+  /**
+   * 等待
+   */
+  public void sync() {
+    if (transport != null) {
+      transport.sync();
     }
   }
 

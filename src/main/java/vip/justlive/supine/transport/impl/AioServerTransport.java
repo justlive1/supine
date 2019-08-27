@@ -34,13 +34,19 @@ public class AioServerTransport implements ServerTransport {
     GroupContext groupContext = new GroupContext(new ServerHandler());
     server = new Server(groupContext);
     server.start(address);
-    server.sync();
   }
 
   @Override
   public void stop() {
     if (server != null) {
       server.stop();
+    }
+  }
+
+  @Override
+  public void sync() {
+    if (server != null) {
+      server.sync();
     }
   }
 }

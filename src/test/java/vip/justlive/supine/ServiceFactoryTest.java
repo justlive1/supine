@@ -39,5 +39,6 @@ public class ServiceFactoryTest {
       factory.stop();
     }).start();
     factory.start();
+    factory.sync();
   }
 }

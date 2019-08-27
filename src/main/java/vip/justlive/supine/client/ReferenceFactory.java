@@ -22,6 +22,7 @@ import vip.justlive.oxygen.core.util.ClassUtils;
 import vip.justlive.oxygen.core.util.MoreObjects;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.registry.LocalRegistry;
+import vip.justlive.supine.registry.MulticastRegistry;
 import vip.justlive.supine.registry.Registry;
 
 /**
@@ -45,6 +46,9 @@ public class ReferenceFactory {
   }
 
   private static Registry select(ClientConfig config) {
+    if (config.getRegistryType() == 1) {
+      return new MulticastRegistry(config);
+    }
     if (config.getRegistryAddress() == null || config.getRegistryAddress().trim().isEmpty()) {
       throw Exceptions.fail("[registryAddress]不正确");
     }

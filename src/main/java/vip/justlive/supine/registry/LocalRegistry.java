@@ -17,7 +17,6 @@ package vip.justlive.supine.registry;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import vip.justlive.oxygen.core.constant.Constants;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.SystemUtils;
@@ -33,8 +32,6 @@ import vip.justlive.supine.transport.ClientTransport;
 public class LocalRegistry extends AbstractRegistry {
 
   private final List<InetSocketAddress> socketAddresses = new ArrayList<>();
-  private final Random random = new Random();
-  private int index = -1;
 
   public LocalRegistry(ClientConfig config) {
     init(config);
@@ -69,17 +66,6 @@ public class LocalRegistry extends AbstractRegistry {
     if (size == 0) {
       throw Exceptions.fail("没有可用的服务提供者");
     }
-    if (index == -1) {
-      index = random.nextInt(size);
-    }
-    for (int i = 0; i < size; i++) {
-      InetSocketAddress address = socketAddresses.get(index);
-      ClientTransport transport = get(address);
-      index = (index + 1) % socketAddresses.size();
-      if (transport != null && !transport.isClosed()) {
-        return transport;
-      }
-    }
-    throw Exceptions.fail("远程服务不可用");
+    return load(socketAddresses);
   }
 }
