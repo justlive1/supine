@@ -16,11 +16,13 @@ package vip.justlive.supine.service;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import lombok.Data;
 import vip.justlive.oxygen.core.constant.Constants;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.ClassUtils;
+import vip.justlive.supine.common.RequestKey;
 import vip.justlive.supine.common.ServiceConfig;
+import vip.justlive.supine.registry.MulticastRegistry;
+import vip.justlive.supine.registry.Registry;
 import vip.justlive.supine.transport.ServerTransport;
 import vip.justlive.supine.transport.impl.AioServerTransport;
 
@@ -29,13 +31,29 @@ import vip.justlive.supine.transport.impl.AioServerTransport;
  *
  * @author wubo
  */
-@Data
 public class ServiceFactory {
 
   private final ServiceConfig config;
+  private final Registry registry;
 
   private ServerTransport transport;
   private volatile boolean state;
+
+  public ServiceFactory(ServiceConfig config) {
+    this(config, select(config));
+  }
+
+  public ServiceFactory(ServiceConfig config, Registry registry) {
+    this.config = config;
+    this.registry = registry;
+  }
+
+  private static Registry select(ServiceConfig config) {
+    if (config.getRegistryType() == 1) {
+      return new MulticastRegistry(config);
+    }
+    return null;
+  }
 
   /**
    * 注册服务
@@ -98,9 +116,8 @@ public class ServiceFactory {
     try {
       for (Method method : methods) {
         Method realMethod = clazz.getDeclaredMethod(method.getName(), method.getParameterTypes());
-        ServiceMethodInvoker.add(
-            new ServiceMethodKey(version, interfaceType.getName(), method.getName(),
-                method.getParameterTypes()), service, realMethod);
+        ServiceMethodInvoker.add(new RequestKey(version, interfaceType.getName(), method.getName(),
+            method.getParameterTypes()), service, realMethod);
       }
     } catch (NoSuchMethodException e) {
       throw Exceptions.wrap(e);
@@ -119,6 +136,9 @@ public class ServiceFactory {
     state = true;
     transport = new AioServerTransport();
     transport.start(config.getHost(), config.getPort());
+    if (registry != null) {
+      registry.start();
+    }
   }
 
   /**
@@ -129,6 +149,9 @@ public class ServiceFactory {
       return;
     }
     state = false;
+    if (registry != null) {
+      registry.stop();
+    }
     transport.stop();
     ServiceMethodInvoker.clear();
   }

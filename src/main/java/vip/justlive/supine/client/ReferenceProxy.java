@@ -26,9 +26,10 @@ import lombok.Data;
 import vip.justlive.oxygen.core.util.SnowflakeIdWorker;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.common.Request;
+import vip.justlive.supine.common.RequestKey;
 import vip.justlive.supine.common.Response;
 import vip.justlive.supine.common.ResultFutures;
-import vip.justlive.supine.router.Router;
+import vip.justlive.supine.registry.Registry;
 import vip.justlive.supine.transport.ClientTransport;
 
 /**
@@ -40,7 +41,7 @@ import vip.justlive.supine.transport.ClientTransport;
 public class ReferenceProxy implements InvocationHandler {
 
   private final ClientConfig config;
-  private final Router router;
+  private final Registry registry;
   private final String version;
 
   @Override
@@ -59,7 +60,9 @@ public class ReferenceProxy implements InvocationHandler {
         .setArgTypes(method.getParameterTypes()).setArgs(args)
         .setId(SnowflakeIdWorker.defaultNextId());
 
-    ClientTransport transport = router.route(request);
+    ClientTransport transport = registry.discovery(
+        new RequestKey(version, request.getClassName(), request.getMethodName(),
+            request.getArgTypes()));
 
     CompletableFuture<Response> future = new CompletableFuture<>();
     ResultFutures.add(request.getId(), future);

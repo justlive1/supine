@@ -14,6 +14,12 @@
 
 package vip.justlive.supine.registry;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import vip.justlive.supine.common.RequestKey;
+import vip.justlive.supine.transport.ClientTransport;
+
 /**
  * 服务注册
  *
@@ -21,4 +27,55 @@ package vip.justlive.supine.registry;
  */
 public interface Registry {
 
+  /**
+   * 注册方法调用key
+   *
+   * @param key 方法调用key
+   */
+  default void register(RequestKey key) {
+    register(Collections.singletonList(key));
+  }
+
+  /**
+   * 注册方法调用keys
+   *
+   * @param keys 方法调用keys
+   */
+  void register(List<RequestKey> keys);
+
+  /**
+   * 注销方法调用key
+   *
+   * @param key 方法调用key
+   */
+  default void unregister(RequestKey key) {
+    unregister(Collections.singletonList(key));
+  }
+
+  /**
+   * 注销方法调用key
+   *
+   * @param keys 方法调用keys
+   */
+  void unregister(List<RequestKey> keys);
+
+  /**
+   * 启动
+   *
+   * @throws IOException io异常时抛出
+   */
+  void start() throws IOException;
+
+  /**
+   * 停止
+   */
+  void stop();
+
+  /**
+   * 发现
+   *
+   * @param key 方法调用key
+   * @return ClientTransport
+   */
+  ClientTransport discovery(RequestKey key);
 }

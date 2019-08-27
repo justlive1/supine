@@ -12,24 +12,28 @@
  * the License.
  */
 
-package vip.justlive.supine.router;
+package vip.justlive.supine.common;
 
-import vip.justlive.supine.common.Request;
-import vip.justlive.supine.transport.ClientTransport;
+import java.io.Serializable;
+import java.util.List;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 /**
- * 客户端路由
+ * 注册信息
  *
  * @author wubo
  */
-public interface Router {
+@Data
+@Accessors(chain = true)
+public class RegistryInfo implements Serializable {
 
   /**
-   * 选择路由
-   *
-   * @param request 请求
-   * @return 客户端传输
+   * multicast 默认地址
    */
-  ClientTransport route(Request request);
-
+  public static final String DEFAULT_MULTICAST_ADDRESS = "234.69.69.69:56969";
+  private static final long serialVersionUID = 1L;
+  private String host;
+  private int port;
+  private List<RequestKey> keys;
 }

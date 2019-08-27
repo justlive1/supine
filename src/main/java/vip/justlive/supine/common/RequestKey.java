@@ -12,19 +12,28 @@
  * the License.
  */
 
-package vip.justlive.supine.service;
+package vip.justlive.supine.common;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
-import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
  * 服务方法key
  *
  * @author wubo
  */
-@Data
-public class ServiceMethodKey {
+@Getter
+@Setter
+@Accessors(chain = true)
+@RequiredArgsConstructor
+public class RequestKey implements Serializable {
+
+  private static final long serialVersionUID = 1L;
 
   private final String version;
   private final String className;
@@ -42,10 +51,10 @@ public class ServiceMethodKey {
     if (obj == this) {
       return true;
     }
-    if (!(obj instanceof ServiceMethodKey)) {
+    if (!(obj instanceof RequestKey)) {
       return false;
     }
-    ServiceMethodKey other = (ServiceMethodKey) obj;
+    RequestKey other = (RequestKey) obj;
     return Objects.equals(version, other.version) && Objects.equals(className, other.className)
         && Objects.equals(methodName, other.methodName) && Arrays.equals(types, other.types);
   }

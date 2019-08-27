@@ -12,60 +12,33 @@
  * the License.
  */
 
-package vip.justlive.supine.router;
+package vip.justlive.supine.registry;
 
 import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.ExpiringMap;
-import vip.justlive.supine.common.Request;
+import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.transport.ClientTransport;
 import vip.justlive.supine.transport.impl.AioClientTransport;
 
 /**
- * 抽象Router
+ * 抽象注册类
  *
  * @author wubo
  */
 @Slf4j
-public abstract class AbstractRouter implements Router {
+public abstract class AbstractRegistry implements Registry {
 
-  final List<InetSocketAddress> socketAddresses = new CopyOnWriteArrayList<>();
-  private final ExpiringMap<InetSocketAddress, ClientTransport> transports;
-  private int index = -1;
-  private final Random random = new Random();
+  private ExpiringMap<InetSocketAddress, ClientTransport> transports;
 
-  AbstractRouter(int idleTimeout) {
-    transports = ExpiringMap.<InetSocketAddress, ClientTransport>builder()
-        .expiration(idleTimeout, TimeUnit.SECONDS).scheduleDelay(idleTimeout)
-        .asyncExpiredListeners(this::expired).build();
+  void init(ClientConfig config) {
+    this.transports = ExpiringMap.<InetSocketAddress, ClientTransport>builder()
+        .expiration(config.getIdleTimeout(), TimeUnit.SECONDS)
+        .scheduleDelay(config.getIdleTimeout()).asyncExpiredListeners(this::expired).build();
   }
 
-  @Override
-  public ClientTransport route(Request request) {
-    int size = socketAddresses.size();
-    if (size == 0) {
-      throw Exceptions.fail("没有可用的服务提供者");
-    }
-    if (index == -1) {
-      index = random.nextInt(size);
-    }
-    for (int i = 0; i < size; i++) {
-      InetSocketAddress address = socketAddresses.get(index);
-      ClientTransport transport = get(address);
-      index = (index + 1) % socketAddresses.size();
-      if (transport != null && !transport.isClosed()) {
-        return transport;
-      }
-    }
-    throw Exceptions.fail("远程服务不可用");
-  }
-
-  private synchronized ClientTransport get(InetSocketAddress address) {
+  synchronized ClientTransport get(InetSocketAddress address) {
     ClientTransport transport = transports.get(address);
     if (transport != null && !transport.isClosed()) {
       return transport;

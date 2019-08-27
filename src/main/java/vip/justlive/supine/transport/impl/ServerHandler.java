@@ -20,9 +20,9 @@ import vip.justlive.oxygen.core.net.aio.protocol.LengthFrame;
 import vip.justlive.oxygen.core.net.aio.protocol.LengthFrameHandler;
 import vip.justlive.supine.codec.Serializer;
 import vip.justlive.supine.common.Request;
+import vip.justlive.supine.common.RequestKey;
 import vip.justlive.supine.common.Response;
 import vip.justlive.supine.service.ServiceMethodInvoker;
-import vip.justlive.supine.service.ServiceMethodKey;
 
 /**
  * 服务端消息处理
@@ -40,7 +40,7 @@ public class ServerHandler extends LengthFrameHandler {
       return;
     }
     Request request = (Request) Serializer.def().decode(frame.getBody());
-    ServiceMethodKey key = new ServiceMethodKey(request.getVersion(), request.getClassName(),
+    RequestKey key = new RequestKey(request.getVersion(), request.getClassName(),
         request.getMethodName(), request.getArgTypes());
     ServiceMethodInvoker invoker = ServiceMethodInvoker.lookup(key);
     Response response = new Response().setId(request.getId());

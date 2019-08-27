@@ -16,9 +16,12 @@ package vip.justlive.supine.service;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.Data;
+import vip.justlive.supine.common.RequestKey;
 
 /**
  * 服务调用类
@@ -28,7 +31,7 @@ import lombok.Data;
 @Data
 public class ServiceMethodInvoker {
 
-  private static final Map<ServiceMethodKey, ServiceMethodInvoker> SERVICES = new HashMap<>(4);
+  private static final Map<RequestKey, ServiceMethodInvoker> SERVICES = new HashMap<>(4);
 
   private final Object service;
   private final Method method;
@@ -40,7 +43,7 @@ public class ServiceMethodInvoker {
    * @param service 服务
    * @param method 方法
    */
-  public static void add(ServiceMethodKey key, Object service, Method method) {
+  public static void add(RequestKey key, Object service, Method method) {
     SERVICES.put(key, new ServiceMethodInvoker(service, method));
   }
 
@@ -50,8 +53,17 @@ public class ServiceMethodInvoker {
    * @param key 服务方法起那么
    * @return 服务调用
    */
-  public static ServiceMethodInvoker lookup(ServiceMethodKey key) {
+  public static ServiceMethodInvoker lookup(RequestKey key) {
     return SERVICES.get(key);
+  }
+
+  /**
+   * 获取所有服务调用key
+   *
+   * @return keys
+   */
+  public static List<RequestKey> requestKeys() {
+    return new ArrayList<>(SERVICES.keySet());
   }
 
   /**

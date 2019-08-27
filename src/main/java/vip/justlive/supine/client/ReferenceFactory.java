@@ -14,14 +14,15 @@
 
 package vip.justlive.supine.client;
 
+import java.io.IOException;
 import java.lang.reflect.Proxy;
 import vip.justlive.oxygen.core.constant.Constants;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.ClassUtils;
 import vip.justlive.oxygen.core.util.MoreObjects;
 import vip.justlive.supine.common.ClientConfig;
-import vip.justlive.supine.router.DirectRouter;
-import vip.justlive.supine.router.Router;
+import vip.justlive.supine.registry.LocalRegistry;
+import vip.justlive.supine.registry.Registry;
 
 /**
  * 客户端服务工厂
@@ -31,18 +32,24 @@ import vip.justlive.supine.router.Router;
 public class ReferenceFactory {
 
   private final ClientConfig config;
-  private final Router router;
+  private final Registry registry;
   private volatile boolean state;
 
   public ReferenceFactory(ClientConfig config) {
     this(config, select(config));
   }
 
-  public ReferenceFactory(ClientConfig config, Router router) {
+  public ReferenceFactory(ClientConfig config, Registry registry) {
     this.config = config;
-    this.router = router;
+    this.registry = registry;
   }
 
+  private static Registry select(ClientConfig config) {
+    if (config.getRegistryAddress() == null || config.getRegistryAddress().trim().isEmpty()) {
+      throw Exceptions.fail("[registryAddress]不正确");
+    }
+    return new LocalRegistry(config);
+  }
 
   /**
    * 创建服务代理
@@ -74,17 +81,20 @@ public class ReferenceFactory {
   public <T> T create(Class<T> referenceType, String version) {
     return referenceType.cast(Proxy
         .newProxyInstance(referenceType.getClassLoader(), new Class[]{referenceType},
-            new ReferenceProxy(config, router, version)));
+            new ReferenceProxy(config, registry, version)));
   }
 
   /**
    * 启动
    */
-  public void start() {
+  public void start() throws IOException {
     if (state) {
       return;
     }
     state = true;
+    if (registry != null) {
+      registry.start();
+    }
   }
 
   /**
@@ -95,12 +105,8 @@ public class ReferenceFactory {
       return;
     }
     state = false;
-  }
-
-  private static Router select(ClientConfig config) {
-    if (config.getRegistryAddress() == null || config.getRegistryAddress().trim().isEmpty()) {
-      throw Exceptions.fail("[registryAddress]不能为空");
+    if (registry != null) {
+      registry.stop();
     }
-    return new DirectRouter(config);
   }
 }
