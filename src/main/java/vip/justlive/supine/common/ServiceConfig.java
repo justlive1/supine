@@ -14,16 +14,15 @@
 
 package vip.justlive.supine.common;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import vip.justlive.oxygen.core.util.SystemUtils;
 
 /**
  * 服务端配置
  *
  * @author wubo
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
 public class ServiceConfig extends Config {
 
   /**
@@ -34,4 +33,13 @@ public class ServiceConfig extends Config {
    * 绑定端口
    */
   private final int port;
+
+  public ServiceConfig(int port) {
+    this(SystemUtils.getLocalAddress().getHostAddress(), port);
+  }
+
+  public ServiceConfig(String host, int port) {
+    this.host = host;
+    this.port = port;
+  }
 }

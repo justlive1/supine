@@ -14,12 +14,8 @@
 
 package vip.justlive.supine.client;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.Data;
@@ -51,10 +47,6 @@ public class ReferenceProxy implements InvocationHandler {
       return method.invoke(this, args);
     }
 
-    if (isDefaultMethod(method)) {
-      return invokeDefaultMethod(proxy, method, args);
-    }
-
     Request request = new Request().setVersion(version)
         .setClassName(method.getDeclaringClass().getName()).setMethodName(method.getName())
         .setArgTypes(method.getParameterTypes()).setArgs(args)
@@ -78,24 +70,6 @@ public class ReferenceProxy implements InvocationHandler {
     } finally {
       ResultFutures.remove(request.getId());
     }
-  }
-
-  private boolean isDefaultMethod(Method method) {
-    return (method.getModifiers() & (Modifier.ABSTRACT | Modifier.PUBLIC | Modifier.STATIC))
-        == Modifier.PUBLIC && method.getDeclaringClass().isInterface();
-  }
-
-  private Object invokeDefaultMethod(Object proxy, Method method, Object[] args) throws Throwable {
-    final Constructor<Lookup> constructor = MethodHandles.Lookup.class
-        .getDeclaredConstructor(Class.class, int.class);
-    if (!constructor.isAccessible()) {
-      constructor.setAccessible(true);
-    }
-    final Class<?> declaringClass = method.getDeclaringClass();
-    return constructor.newInstance(declaringClass,
-        MethodHandles.Lookup.PRIVATE | MethodHandles.Lookup.PROTECTED | MethodHandles.Lookup.PACKAGE
-            | MethodHandles.Lookup.PUBLIC).unreflectSpecial(method, declaringClass).bindTo(proxy)
-        .invokeWithArguments(args);
   }
 
 }

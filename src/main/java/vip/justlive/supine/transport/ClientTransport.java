@@ -26,17 +26,6 @@ import vip.justlive.supine.common.Request;
 public interface ClientTransport {
 
   /**
-   * 连接服务端
-   *
-   * @param host 主机
-   * @param port 端口
-   * @throws IOException io异常时抛出
-   */
-  default void connect(String host, int port) throws IOException {
-    connect(new InetSocketAddress(host, port));
-  }
-
-  /**
    * 连接服务器
    *
    * @param address 地址

@@ -25,7 +25,18 @@ public class SayImpl implements Say {
 
   @Override
   public String hello(String msg) {
+    return h(msg);
+  }
+
+  void def() {
+    System.out.println("def");
+  }
+
+  private String h(String msg) {
     return msg;
   }
 
+  public void a() {
+    System.out.println("a");
+  }
 }

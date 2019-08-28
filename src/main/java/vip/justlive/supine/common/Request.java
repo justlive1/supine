@@ -29,11 +29,29 @@ public class Request implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
+  /**
+   * 请求id
+   */
   private long id;
+  /**
+   * 接口类名
+   */
   private String className;
+  /**
+   * 方法名
+   */
   private String methodName;
+  /**
+   * 版本号
+   */
   private String version;
+  /**
+   * 参数类型
+   */
   private Class<?>[] argTypes;
+  /**
+   * 方法调用参数
+   */
   private Object[] args;
 
 }

@@ -14,16 +14,16 @@
 
 package vip.justlive.supine.common;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 客户端配置
  *
  * @author wubo
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 public class ClientConfig extends Config {
 
   /**

@@ -20,12 +20,11 @@ import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.ExpiringMap;
@@ -44,13 +43,12 @@ import vip.justlive.supine.transport.ClientTransport;
  * @author wubo
  */
 @Slf4j
-@RequiredArgsConstructor
 public class MulticastRegistry extends AbstractRegistry {
 
   private static final int BUFFER_SIZE = 64 * 1024;
-  private static final long INTERVAL = 1_000;
+  private static final long INTERVAL = 10_000;
 
-  private final List<RequestKey> keys = new CopyOnWriteArrayList<>();
+  private final RegistryInfo registryInfo = new RegistryInfo().setKeys(new LinkedList<>());
   private final ServiceConfig serviceConfig;
   private final ClientConfig clientConfig;
   private MulticastSocket socket;
@@ -60,6 +58,8 @@ public class MulticastRegistry extends AbstractRegistry {
 
   private ExpiringMap<InetSocketAddress, List<RequestKey>> services;
   private Map<RequestKey, List<InetSocketAddress>> requestToService;
+  private long lastUpdated;
+  private InetSocketAddress registryAddress;
 
 
   public MulticastRegistry(ServiceConfig config) {
@@ -78,17 +78,25 @@ public class MulticastRegistry extends AbstractRegistry {
 
   @Override
   public void register(List<RequestKey> keys) {
-    this.keys.addAll(keys);
+    this.registryInfo.getKeys().addAll(keys);
+    if (packet != null) {
+      byte[] data = Serializer.def().encode(registryInfo);
+      packet = new DatagramPacket(data, data.length, registryAddress);
+    }
   }
 
   @Override
   public void unregister(List<RequestKey> keys) {
-    this.keys.removeAll(keys);
+    this.registryInfo.getKeys().removeAll(keys);
+    if (packet != null) {
+      byte[] data = Serializer.def().encode(registryInfo);
+      packet = new DatagramPacket(data, data.length, registryAddress);
+    }
   }
 
   @Override
   public void start() throws IOException {
-    schedule = ThreadUtils.newScheduledExecutor(2, "registry-%d");
+    schedule = ThreadUtils.newScheduledExecutor(1, "registry");
     if (serviceConfig != null) {
       service(serviceConfig);
     } else if (clientConfig != null) {
@@ -111,7 +119,6 @@ public class MulticastRegistry extends AbstractRegistry {
     packet = new DatagramPacket(new byte[BUFFER_SIZE], BUFFER_SIZE);
     stopped = false;
     schedule.execute(new Receiver());
-    schedule.scheduleWithFixedDelay(this::refresh, INTERVAL, INTERVAL / 2, TimeUnit.MILLISECONDS);
   }
 
   private void service(ServiceConfig config) throws IOException {
@@ -120,22 +127,24 @@ public class MulticastRegistry extends AbstractRegistry {
     socket.setTimeToLive(255);
     socket.setSendBufferSize(BUFFER_SIZE);
 
-    RegistryInfo registryInfo = new RegistryInfo().setHost(config.getHost())
-        .setPort(config.getPort()).setKeys(keys);
-    byte[] data = Serializer.def().encode(registryInfo);
-    String registryAddress = config.getRegistryAddress();
-    if (registryAddress == null || registryAddress.trim().length() == 0) {
-      registryAddress = RegistryInfo.DEFAULT_MULTICAST_ADDRESS;
+    registryInfo.setHost(config.getHost()).setPort(config.getPort());
+    if (config.getRegistryAddress() == null || config.getRegistryAddress().trim().length() == 0) {
+      registryAddress = SystemUtils.parseAddress(RegistryInfo.DEFAULT_MULTICAST_ADDRESS);
+    } else {
+      registryAddress = SystemUtils.parseAddress(config.getRegistryAddress());
     }
-    packet = new DatagramPacket(data, data.length, SystemUtils.parseAddress(registryAddress));
+
+    byte[] data = Serializer.def().encode(registryInfo);
+    packet = new DatagramPacket(data, data.length, registryAddress);
+
     stopped = false;
-    schedule.schedule(new Sender(), INTERVAL, TimeUnit.MILLISECONDS);
+    schedule.execute(new Sender());
   }
 
   @Override
   public void stop() {
     stopped = true;
-    keys.clear();
+    registryInfo.getKeys().clear();
     if (schedule != null) {
       schedule.shutdown();
     }
@@ -150,27 +159,20 @@ public class MulticastRegistry extends AbstractRegistry {
     return load(addresses);
   }
 
-  private void refresh() {
-    if (services == null) {
-      return;
-    }
-    Map<RequestKey, List<InetSocketAddress>> map = new HashMap<>(2);
-    services.forEach(
-        (k, v) -> v.forEach(item -> map.computeIfAbsent(item, rk -> new ArrayList<>()).add(k)));
-    requestToService = map;
-  }
-
   private class Sender implements Runnable {
 
     @Override
     public void run() {
-      if (stopped || socket == null || packet == null) {
+      if (serviceConfig == null || stopped || socket == null || packet == null) {
         return;
+      }
+      if (log.isDebugEnabled()) {
+        log.info("[{}]开始注册服务，[{}]个调用方法", registryAddress, registryInfo.getKeys().size());
       }
       try {
         socket.send(packet);
       } catch (IOException e) {
-        log.warn("multicast registry send failed", e);
+        log.warn("multicast注册消息发送失败", e);
       }
       if (schedule != null) {
         schedule.schedule(this, INTERVAL, TimeUnit.MILLISECONDS);
@@ -198,11 +200,29 @@ public class MulticastRegistry extends AbstractRegistry {
       }
       final byte[] data = packet.getData();
       RegistryInfo info = (RegistryInfo) Serializer.def().decode(data);
+
+      if (log.isDebugEnabled()) {
+        log.debug("注册中心获取到一个服务地址 -> [{}:{}]", info.getHost(), info.getPort());
+      }
+
       if (info.getKeys() == null || info.getKeys().isEmpty()) {
         return;
       }
       InetSocketAddress address = new InetSocketAddress(info.getHost(), info.getPort());
       services.put(address, info.getKeys());
+
+      long curr = System.currentTimeMillis();
+      if (curr - lastUpdated < INTERVAL) {
+        return;
+      }
+
+      lastUpdated = curr;
+      Map<RequestKey, List<InetSocketAddress>> map = new HashMap<>(2);
+      services.forEach(
+          (k, v) -> v.forEach(item -> map.computeIfAbsent(item, rk -> new ArrayList<>()).add(k)));
+      requestToService = map;
+
     }
+
   }
 }

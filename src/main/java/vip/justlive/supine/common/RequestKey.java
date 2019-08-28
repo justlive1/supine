@@ -17,27 +17,33 @@ package vip.justlive.supine.common;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 
 /**
  * 服务方法key
  *
  * @author wubo
  */
-@Getter
-@Setter
-@Accessors(chain = true)
 @RequiredArgsConstructor
 public class RequestKey implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
+  /**
+   * 版本号
+   */
   private final String version;
+  /**
+   * 类名
+   */
   private final String className;
+  /**
+   * 方法名
+   */
   private final String methodName;
+  /**
+   * 参数类型
+   */
   private final Class<?>[] types;
 
   @Override

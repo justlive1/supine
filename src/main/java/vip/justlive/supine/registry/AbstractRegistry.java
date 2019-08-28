@@ -67,14 +67,14 @@ public abstract class AbstractRegistry implements Registry {
       transports.put(address, transport);
       return transport;
     } catch (Exception e) {
-      log.warn("connect to {} error", address, e);
+      log.warn("客户端连接[{}]服务失败", address, e);
     }
     return null;
   }
 
   private void expired(InetSocketAddress address, ClientTransport transport) {
     if (log.isDebugEnabled()) {
-      log.debug("{} expired. close transport", address);
+      log.debug("[{}]连接空闲超时，关闭连接", address);
     }
     transport.close();
   }

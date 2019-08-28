@@ -14,14 +14,16 @@
 
 package vip.justlive.supine.common;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 配置
  *
  * @author wubo
  */
-@Data
+@Getter
+@Setter
 public class Config {
 
   /**

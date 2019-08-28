@@ -32,8 +32,19 @@ public class RegistryInfo implements Serializable {
    * multicast 默认地址
    */
   public static final String DEFAULT_MULTICAST_ADDRESS = "234.69.69.69:56969";
+
   private static final long serialVersionUID = 1L;
+
+  /**
+   * 远程服务主机
+   */
   private String host;
+  /**
+   * 远程服务端口
+   */
   private int port;
+  /**
+   * 远程服务可调用方法
+   */
   private List<RequestKey> keys;
 }

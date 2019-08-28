@@ -17,17 +17,18 @@ package vip.justlive.supine.common;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.experimental.UtilityClass;
 
 /**
  * 结果futures
  *
  * @author wubo
  */
-@UtilityClass
 public class ResultFutures {
 
   private static final Map<Long, CompletableFuture<Response>> FUTURES = new ConcurrentHashMap<>();
+
+  private ResultFutures() {
+  }
 
   /**
    * 添加future
@@ -45,9 +46,6 @@ public class ResultFutures {
    * @param response 响应
    */
   public static void complete(Response response) {
-    if (response == null) {
-      return;
-    }
     CompletableFuture<Response> future = FUTURES.get(response.getId());
     if (future != null) {
       future.complete(response);

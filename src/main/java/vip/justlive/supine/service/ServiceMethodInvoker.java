@@ -43,7 +43,7 @@ public class ServiceMethodInvoker {
    * @param service 服务
    * @param method 方法
    */
-  public static void add(RequestKey key, Object service, Method method) {
+  static void add(RequestKey key, Object service, Method method) {
     SERVICES.put(key, new ServiceMethodInvoker(service, method));
   }
 
@@ -62,14 +62,14 @@ public class ServiceMethodInvoker {
    *
    * @return keys
    */
-  public static List<RequestKey> requestKeys() {
+  static List<RequestKey> requestKeys() {
     return new ArrayList<>(SERVICES.keySet());
   }
 
   /**
    * 删除
    */
-  public static void clear() {
+  static void clear() {
     SERVICES.clear();
   }
 
