@@ -30,4 +30,9 @@ public class ClientConfig extends Config {
    * 空闲超时时间，单位秒
    */
   private int idleTimeout = 120;
+
+  /**
+   * 是否异步请求
+   */
+  private boolean async;
 }

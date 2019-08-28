@@ -21,6 +21,7 @@ import org.junit.Test;
 import vip.justlive.oxygen.core.exception.CodedException;
 import vip.justlive.supine.client.ReferenceFactory;
 import vip.justlive.supine.common.ClientConfig;
+import vip.justlive.supine.common.ResultFuture;
 import vip.justlive.supine.common.ServiceConfig;
 import vip.justlive.supine.registry.MulticastRegistry;
 import vip.justlive.supine.service.ServiceFactory;
@@ -48,38 +49,7 @@ public class RpcTest {
       e.printStackTrace();
       Assert.fail();
     }
-    discover(factory);
 
-    try {
-      Thread.sleep(1300);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    factory.stop();
-  }
-
-  @Test
-  public void testMulticast() throws IOException {
-    ClientConfig config = new ClientConfig();
-    ReferenceFactory factory = new ReferenceFactory(config, new MulticastRegistry(config));
-    factory.start();
-    new Thread(this::multicastService).start();
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException e) {
-      Assert.fail();
-    }
-    discover(factory);
-
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException e) {
-      Assert.fail();
-    }
-    factory.stop();
-  }
-
-  private void discover(ReferenceFactory factory) {
     Say say = factory.create(Say.class);
 
     String msg = "say";
@@ -99,6 +69,58 @@ public class RpcTest {
     say2 = factory.create(Say.class, "2");
     Assert.assertEquals("2:" + msg, say2.hello(msg));
 
+    try {
+      Thread.sleep(1300);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    factory.stop();
+  }
+
+  @Test
+  public void testMulticast() throws Throwable {
+    ClientConfig config = new ClientConfig();
+    config.setAsync(true);
+    ReferenceFactory factory = new ReferenceFactory(config, new MulticastRegistry(config));
+    factory.start();
+    new Thread(this::multicastService).start();
+    try {
+      Thread.sleep(2000);
+    } catch (InterruptedException e) {
+      Assert.fail();
+    }
+
+    Say say = factory.create(Say.class);
+
+    String msg = "say";
+    say.hello(msg);
+    ResultFuture<String> future = ResultFuture.future();
+    future.setOnSuccess(System.out::println);
+
+    Assert.assertEquals(msg, future.get());
+
+    System.out.println(say.hashCode());
+
+    Say say2 = factory.create(Say.class, "1");
+
+    try {
+      say2.hello(msg);
+      Assert.fail();
+    } catch (CodedException e) {
+      //ignore
+    }
+
+    say2 = factory.create(Say.class, "2");
+    say2.hello(msg);
+    future = ResultFuture.future();
+    Assert.assertEquals("2:" + msg, future.get());
+
+    try {
+      Thread.sleep(2000);
+    } catch (InterruptedException e) {
+      Assert.fail();
+    }
+    factory.stop();
   }
 
   private void registry(ServiceFactory factory) {

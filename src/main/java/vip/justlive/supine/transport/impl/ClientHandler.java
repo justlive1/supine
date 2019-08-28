@@ -19,7 +19,7 @@ import vip.justlive.oxygen.core.net.aio.protocol.LengthFrame;
 import vip.justlive.oxygen.core.net.aio.protocol.LengthFrameHandler;
 import vip.justlive.supine.codec.Serializer;
 import vip.justlive.supine.common.Response;
-import vip.justlive.supine.common.ResultFutures;
+import vip.justlive.supine.common.ResultFuture;
 
 /**
  * 客户端消息处理
@@ -32,6 +32,6 @@ public class ClientHandler extends LengthFrameHandler {
   public void handle(Object data, ChannelContext channelContext) {
     LengthFrame frame = (LengthFrame) data;
     Response response = (Response) Serializer.def().decode(frame.getBody());
-    ResultFutures.complete(response);
+    ResultFuture.complete(response);
   }
 }

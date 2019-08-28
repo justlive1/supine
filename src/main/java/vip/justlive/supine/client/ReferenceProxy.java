@@ -16,15 +16,13 @@ package vip.justlive.supine.client;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.Data;
 import vip.justlive.oxygen.core.util.SnowflakeIdWorker;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.common.Request;
 import vip.justlive.supine.common.RequestKey;
-import vip.justlive.supine.common.Response;
-import vip.justlive.supine.common.ResultFutures;
+import vip.justlive.supine.common.ResultFuture;
 import vip.justlive.supine.registry.Registry;
 import vip.justlive.supine.transport.ClientTransport;
 
@@ -56,20 +54,35 @@ public class ReferenceProxy implements InvocationHandler {
         new RequestKey(version, request.getClassName(), request.getMethodName(),
             request.getArgTypes()));
 
-    CompletableFuture<Response> future = new CompletableFuture<>();
-    ResultFutures.add(request.getId(), future);
-    transport.send(request);
+    ResultFuture<?> resultFuture = new ResultFuture<>(method.getReturnType());
 
-    try {
-      Response response = future.get(config.getTimeout(), TimeUnit.SECONDS);
-      if (response.hasError()) {
-        throw response.getException();
-      } else {
-        return response.getResult();
-      }
-    } finally {
-      ResultFutures.remove(request.getId());
+    if (config.isAsync()) {
+      return async(request, resultFuture, transport);
+    } else {
+      return sync(request, resultFuture, transport);
     }
   }
 
+  private Object sync(Request request, ResultFuture<?> resultFuture, ClientTransport transport)
+      throws Throwable {
+    ResultFuture.add(request.getId(), resultFuture);
+    try {
+      transport.send(request);
+      return resultFuture.get(config.getTimeout(), TimeUnit.SECONDS);
+    } finally {
+      ResultFuture.remove(request.getId());
+    }
+  }
+
+  private Object async(Request request, ResultFuture<?> resultFuture, ClientTransport transport) {
+    ResultFuture.add(request.getId(), resultFuture);
+    resultFuture.local();
+    try {
+      transport.send(request);
+    } catch (Exception e) {
+      ResultFuture.future();
+      throw e;
+    }
+    return null;
+  }
 }
