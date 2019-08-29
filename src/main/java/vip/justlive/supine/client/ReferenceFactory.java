@@ -90,6 +90,8 @@ public class ReferenceFactory {
 
   /**
    * 启动
+   *
+   * @throws IOException io异常时抛出
    */
   public void start() throws IOException {
     if (state) {
