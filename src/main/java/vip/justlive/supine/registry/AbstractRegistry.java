@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.ExpiringMap;
+import vip.justlive.oxygen.core.util.ExpiringMap.ExpiringPolicy;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.transport.ClientTransport;
 import vip.justlive.supine.transport.impl.AioClientTransport;
@@ -39,7 +40,8 @@ public abstract class AbstractRegistry implements Registry {
   void init(ClientConfig config) {
     this.transports = ExpiringMap.<InetSocketAddress, ClientTransport>builder()
         .expiration(config.getIdleTimeout(), TimeUnit.SECONDS)
-        .scheduleDelay(config.getIdleTimeout()).asyncExpiredListeners(this::expired).build();
+        .expiringPolicy(ExpiringPolicy.ACCESSED).scheduleDelay(config.getIdleTimeout())
+        .asyncExpiredListeners(this::expired).build();
   }
 
   ClientTransport load(List<InetSocketAddress> addresses) {
