@@ -55,6 +55,9 @@ public class ContextEventListener implements ApplicationListener<ApplicationCont
     if (factory == null) {
       return;
     }
+    if (log.isDebugEnabled()) {
+      log.debug("关闭Rpc服务");
+    }
     factory.stop();
   }
 
@@ -98,8 +101,10 @@ public class ContextEventListener implements ApplicationListener<ApplicationCont
 
     beans.forEach((k, v) -> factory.register(v));
 
-    log.info("启动Rpc服务[{}:{}]，注册中心[{}|{}]", config.getHost(), config.getPort(),
-        config.getRegistryType(), config.getRegistryAddress());
+    if (log.isDebugEnabled()) {
+      log.debug("启动Rpc服务[{}:{}]，注册中心[{}|{}]", config.getHost(), config.getPort(),
+          config.getRegistryType(), config.getRegistryAddress());
+    }
 
     try {
       factory.start();

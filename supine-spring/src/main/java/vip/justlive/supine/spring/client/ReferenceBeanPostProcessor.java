@@ -17,6 +17,7 @@ package vip.justlive.supine.spring.client;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.DisposableBean;
@@ -39,6 +40,7 @@ import vip.justlive.supine.spring.EnableRpc;
  *
  * @author wubo
  */
+@Slf4j
 public class ReferenceBeanPostProcessor implements BeanPostProcessor, EnvironmentAware,
     BeanFactoryAware, DisposableBean {
 
@@ -114,6 +116,10 @@ public class ReferenceBeanPostProcessor implements BeanPostProcessor, Environmen
       }
       factory = new ReferenceFactory(config);
     }
+
+    if (log.isDebugEnabled()) {
+      log.debug("启动Rpc客户端，注册中心[{}|{}]", config.getRegistryType(), config.getRegistryAddress());
+    }
     try {
       factory.start();
     } catch (IOException e) {
@@ -125,6 +131,9 @@ public class ReferenceBeanPostProcessor implements BeanPostProcessor, Environmen
   @Override
   public void destroy() {
     if (factory != null) {
+      if (log.isDebugEnabled()) {
+        log.debug("关闭Rpc客户端");
+      }
       factory.stop();
       factory = null;
     }
