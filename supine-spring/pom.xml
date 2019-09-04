@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>supine-parent</artifactId>
+    <groupId>vip.justlive</groupId>
+    <version>1.0.1</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>supine-spring</artifactId>
+  <packaging>jar</packaging>
+
+  <name>supine-spring</name>
+  <url>http://www.justlive.vip</url>
+  <description>rpc for spring</description>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>vip.justlive</groupId>
+      <artifactId>supine</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>[4.0.0.RELEASE,)</version>
+    </dependency>
+  </dependencies>
+</project>

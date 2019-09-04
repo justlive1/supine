@@ -12,30 +12,9 @@
  * the License.
  */
 
-package vip.justlive.supine.client;
-
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import vip.justlive.oxygen.core.constant.Constants;
-
 /**
- * 客户端注解，标记在接口上
+ * spring support
  *
  * @author wubo
  */
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Reference {
-
-  /**
-   * 接口版本号
-   *
-   * @return version
-   */
-  String version() default Constants.EMPTY;
-
-}
+package vip.justlive.supine.spring;

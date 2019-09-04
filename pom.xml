@@ -5,13 +5,18 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>vip.justlive</groupId>
-  <artifactId>supine</artifactId>
+  <artifactId>supine-parent</artifactId>
   <version>1.0.1</version>
-  <packaging>jar</packaging>
+  <modules>
+    <module>supine</module>
+    <module>supine-spring</module>
+  </modules>
 
-  <name>supine</name>
+  <packaging>pom</packaging>
+
+  <name>supine-parent</name>
   <url>http://www.justlive.vip</url>
-  <description>rpc</description>
+  <description>supine parent pom</description>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -198,5 +203,6 @@
     </dependency>
 
   </dependencies>
+
 
 </project>

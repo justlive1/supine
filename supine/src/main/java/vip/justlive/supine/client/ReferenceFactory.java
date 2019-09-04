@@ -16,6 +16,10 @@ package vip.justlive.supine.client;
 
 import java.io.IOException;
 import java.lang.reflect.Proxy;
+import java.util.HashMap;
+import java.util.Map;
+import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 import vip.justlive.oxygen.core.constant.Constants;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.ClassUtils;
@@ -32,6 +36,7 @@ import vip.justlive.supine.registry.Registry;
  */
 public class ReferenceFactory {
 
+  private static final Map<Pair, Object> PROXIES = new HashMap<>(4);
   private final ClientConfig config;
   private final Registry registry;
   private volatile boolean state;
@@ -83,9 +88,16 @@ public class ReferenceFactory {
    * @return bean
    */
   public <T> T create(Class<T> referenceType, String version) {
-    return referenceType.cast(Proxy
+    Pair pair = new Pair(referenceType, version);
+    Object bean = PROXIES.get(pair);
+    if (bean != null) {
+      return referenceType.cast(bean);
+    }
+    T obj = referenceType.cast(Proxy
         .newProxyInstance(referenceType.getClassLoader(), new Class[]{referenceType},
             new ReferenceProxy(config, registry, version)));
+    PROXIES.put(pair, obj);
+    return obj;
   }
 
   /**
@@ -111,8 +123,18 @@ public class ReferenceFactory {
       return;
     }
     state = false;
+    PROXIES.clear();
     if (registry != null) {
       registry.stop();
     }
+  }
+
+  @EqualsAndHashCode
+  @RequiredArgsConstructor
+  private static class Pair {
+
+    final Class<?> clazz;
+    final String version;
+
   }
 }
