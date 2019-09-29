@@ -47,9 +47,4 @@ public interface ServerTransport {
    * 停止
    */
   void stop();
-
-  /**
-   * 等待
-   */
-  void sync();
 }

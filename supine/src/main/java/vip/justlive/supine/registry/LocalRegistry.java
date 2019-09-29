@@ -17,8 +17,8 @@ package vip.justlive.supine.registry;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import vip.justlive.oxygen.core.constant.Constants;
 import vip.justlive.oxygen.core.exception.Exceptions;
+import vip.justlive.oxygen.core.util.Strings;
 import vip.justlive.oxygen.core.util.SystemUtils;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.common.RequestKey;
@@ -35,7 +35,7 @@ public class LocalRegistry extends AbstractRegistry {
 
   public LocalRegistry(ClientConfig config) {
     init(config);
-    for (String address : config.getRegistryAddress().trim().split(Constants.COMMA)) {
+    for (String address : config.getRegistryAddress().trim().split(Strings.COMMA)) {
       socketAddresses.add(SystemUtils.parseAddress(address));
     }
   }

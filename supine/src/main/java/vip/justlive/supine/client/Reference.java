@@ -19,7 +19,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import vip.justlive.oxygen.core.constant.Constants;
+import vip.justlive.oxygen.core.util.Strings;
 
 /**
  * 客户端注解，标记在接口上
@@ -36,6 +36,6 @@ public @interface Reference {
    *
    * @return version
    */
-  String version() default Constants.EMPTY;
+  String version() default Strings.EMPTY;
 
 }

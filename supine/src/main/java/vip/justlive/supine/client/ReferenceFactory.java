@@ -20,10 +20,10 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
-import vip.justlive.oxygen.core.constant.Constants;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.ClassUtils;
 import vip.justlive.oxygen.core.util.MoreObjects;
+import vip.justlive.oxygen.core.util.Strings;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.registry.LocalRegistry;
 import vip.justlive.supine.registry.MulticastRegistry;
@@ -76,7 +76,7 @@ public class ReferenceFactory {
     if (reference != null) {
       return create(referenceType, reference.version());
     }
-    return create(referenceType, Constants.EMPTY);
+    return create(referenceType, Strings.EMPTY);
   }
 
   /**

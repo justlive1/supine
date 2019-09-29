@@ -35,6 +35,7 @@ public class AioClientTransport implements ClientTransport {
   @Override
   public void connect(InetSocketAddress address) throws IOException {
     GroupContext groupContext = new GroupContext(new ClientHandler());
+    groupContext.setDaemon(true);
     client = new Client(groupContext);
     client.connect(address);
   }

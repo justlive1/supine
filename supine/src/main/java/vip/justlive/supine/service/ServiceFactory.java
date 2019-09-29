@@ -16,9 +16,9 @@ package vip.justlive.supine.service;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import vip.justlive.oxygen.core.constant.Constants;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.ClassUtils;
+import vip.justlive.oxygen.core.util.Strings;
 import vip.justlive.supine.common.RequestKey;
 import vip.justlive.supine.common.ServiceConfig;
 import vip.justlive.supine.registry.MulticastRegistry;
@@ -66,7 +66,7 @@ public class ServiceFactory {
     if (annotation != null) {
       register(service, annotation.version());
     } else {
-      register(service, Constants.EMPTY);
+      register(service, Strings.EMPTY);
     }
   }
 
@@ -97,7 +97,7 @@ public class ServiceFactory {
    * @param service 服务实现
    */
   public void register(Class<?> interfaceType, Object service) {
-    register(interfaceType, service, Constants.EMPTY);
+    register(interfaceType, service, Strings.EMPTY);
   }
 
   /**
@@ -139,15 +139,6 @@ public class ServiceFactory {
     if (registry != null) {
       registry.register(ServiceMethodInvoker.requestKeys());
       registry.start();
-    }
-  }
-
-  /**
-   * 等待
-   */
-  public void sync() {
-    if (transport != null) {
-      transport.sync();
     }
   }
 

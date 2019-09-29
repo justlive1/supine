@@ -6,7 +6,7 @@
 
   <groupId>vip.justlive</groupId>
   <artifactId>supine-parent</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
   <modules>
     <module>supine</module>
     <module>supine-spring</module>
@@ -24,11 +24,11 @@
 
     <junit.version>4.12</junit.version>
     <kryo.version>4.0.2</kryo.version>
-    <kryo-serializers.version>0.43</kryo-serializers.version>
+    <kryo-serializers.version>0.45</kryo-serializers.version>
     <logback.version>1.2.3</logback.version>
-    <lombok.version>1.18.8</lombok.version>
-    <oxygen.version>2.1.1</oxygen.version>
-    <slf4j.version>1.7.26</slf4j.version>
+    <lombok.version>1.18.10</lombok.version>
+    <oxygen.version>2.1.2</oxygen.version>
+    <slf4j.version>1.7.28</slf4j.version>
 
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>

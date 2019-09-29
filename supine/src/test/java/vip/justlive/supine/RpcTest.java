@@ -15,10 +15,10 @@
 package vip.justlive.supine;
 
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
 import org.junit.Assert;
 import org.junit.Test;
 import vip.justlive.oxygen.core.exception.CodedException;
+import vip.justlive.oxygen.core.util.ThreadUtils;
 import vip.justlive.supine.client.ReferenceFactory;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.common.ResultFuture;
@@ -32,13 +32,10 @@ import vip.justlive.supine.service.ServiceFactory;
 public class RpcTest {
 
   @Test
-  public void testLocal() throws InterruptedException {
-    CountDownLatch latch = new CountDownLatch(1);
-    new Thread(() -> {
-      localService(latch);
-    }).start();
-    latch.await();
-
+  public void testLocal()  {
+    ServiceConfig serviceConfig = new ServiceConfig("localhost", 10086);
+    ServiceFactory serviceFactory = new ServiceFactory(serviceConfig);
+    registry(serviceFactory);
     ClientConfig config = new ClientConfig();
     config.setIdleTimeout(120);
     config.setRegistryAddress("localhost:10086");
@@ -64,16 +61,13 @@ public class RpcTest {
       Assert.fail();
     } catch (CodedException e) {
       //ignore
+      System.out.println(e);
     }
 
     say2 = factory.create(Say.class, "2");
     Assert.assertEquals("2:" + msg, say2.hello(msg));
 
-    try {
-      Thread.sleep(1300);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+    ThreadUtils.sleep(1300);
     factory.stop();
   }
 
@@ -83,12 +77,17 @@ public class RpcTest {
     config.setAsync(true);
     ReferenceFactory factory = new ReferenceFactory(config, new MulticastRegistry(config));
     factory.start();
-    new Thread(this::multicastService).start();
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException e) {
-      Assert.fail();
-    }
+
+    ServiceConfig serviceConfig = new ServiceConfig(10086);
+    ServiceFactory serviceFactory = new ServiceFactory(serviceConfig, new MulticastRegistry(serviceConfig));
+    registry(serviceFactory);
+
+    new Thread(() -> {
+      ThreadUtils.sleep(3000);
+      factory.stop();
+    }).start();
+
+    ThreadUtils.sleep(2000);
 
     Say say = factory.create(Say.class);
 
@@ -133,26 +132,4 @@ public class RpcTest {
     }
   }
 
-  private void localService(CountDownLatch latch) {
-    ServiceConfig config = new ServiceConfig("localhost", 10086);
-    ServiceFactory factory = new ServiceFactory(config);
-    registry(factory);
-    latch.countDown();
-    factory.sync();
-  }
-
-  private void multicastService() {
-    ServiceConfig config = new ServiceConfig(10086);
-    ServiceFactory factory = new ServiceFactory(config, new MulticastRegistry(config));
-    registry(factory);
-    new Thread(() -> {
-      try {
-        Thread.sleep(3000);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-      factory.stop();
-    }).start();
-    factory.sync();
-  }
 }

@@ -43,10 +43,4 @@ public class AioServerTransport implements ServerTransport {
     }
   }
 
-  @Override
-  public void sync() {
-    if (server != null) {
-      server.sync();
-    }
-  }
 }
