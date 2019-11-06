@@ -44,8 +44,6 @@ factory.register(new SayImpl());
 factory.register(new SayImpl2(), "2");
 
 factory.start();
-// 服务端常驻
-factory.sync();
 ```
 
 - multicast注册
@@ -65,8 +63,6 @@ factory.register(new SayImpl());
 factory.register(new SayImpl2(), "2");
 
 factory.start();
-// 服务端常驻
-factory.sync();
 ```
 
 客户端
@@ -98,9 +94,12 @@ ClientConfig config = new ClientConfig();
 // 开启异步调用
 config.setAsync(true);
 
+config.setRegistryType(1);
 // 指定注册地址，不填则使用默认值（234.69.69.69:56969）
 config.setRegistryAddress("234.69.69.69:56969");
 ReferenceFactory factory = new ReferenceFactory(config);
+// 启动注册
+factory.start();
 
 // 创建指定版本的接口代理
 Say say = factory.create(Say.class, "2");
