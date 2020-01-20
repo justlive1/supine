@@ -18,12 +18,14 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 /**
  * 服务方法key
  *
  * @author wubo
  */
+@ToString
 @RequiredArgsConstructor
 public class RequestKey implements Serializable {
 

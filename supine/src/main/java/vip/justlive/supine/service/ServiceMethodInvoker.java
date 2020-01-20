@@ -62,7 +62,7 @@ public class ServiceMethodInvoker {
    *
    * @return keys
    */
-  static List<RequestKey> requestKeys() {
+  public static List<RequestKey> requestKeys() {
     return new ArrayList<>(SERVICES.keySet());
   }
 

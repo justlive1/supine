@@ -18,6 +18,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.ExpiringMap;
@@ -47,18 +48,23 @@ public abstract class AbstractRegistry implements Registry {
   ClientTransport load(List<InetSocketAddress> addresses) {
     int size = addresses.size();
     int index = RANDOM.nextInt(size);
+    AtomicReference<Exception> reference = new AtomicReference<>();
     for (int i = 0; i < size; i++) {
       InetSocketAddress address = addresses.get(index);
-      ClientTransport transport = get(address);
+      ClientTransport transport = get(address, reference);
       index = (index + 1) % addresses.size();
       if (transport != null && !transport.isClosed()) {
         return transport;
       }
     }
+    if (reference.get() != null) {
+      throw Exceptions.wrap(reference.get());
+    }
     throw Exceptions.fail("远程服务不可用");
   }
 
-  private synchronized ClientTransport get(InetSocketAddress address) {
+  private synchronized ClientTransport get(InetSocketAddress address,
+      AtomicReference<Exception> reference) {
     ClientTransport transport = transports.get(address);
     if (transport != null && !transport.isClosed()) {
       return transport;
@@ -70,6 +76,7 @@ public abstract class AbstractRegistry implements Registry {
       return transport;
     } catch (Exception e) {
       log.warn("客户端连接[{}]服务失败", address, e);
+      reference.set(e);
     }
     return null;
   }

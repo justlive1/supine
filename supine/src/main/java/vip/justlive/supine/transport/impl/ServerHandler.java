@@ -14,6 +14,7 @@
 
 package vip.justlive.supine.transport.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.net.aio.core.ChannelContext;
 import vip.justlive.oxygen.core.net.aio.protocol.LengthFrame;
@@ -29,8 +30,8 @@ import vip.justlive.supine.service.ServiceMethodInvoker;
  *
  * @author wubo
  */
+@Slf4j
 public class ServerHandler extends LengthFrameHandler {
-
 
   @Override
   public void handle(Object data, ChannelContext channelContext) {
@@ -45,6 +46,8 @@ public class ServerHandler extends LengthFrameHandler {
     ServiceMethodInvoker invoker = ServiceMethodInvoker.lookup(key);
     Response response = new Response().setId(request.getId());
     if (invoker == null) {
+      log.warn("not found service for {} {} in {}", request, key,
+          ServiceMethodInvoker.requestKeys());
       response.setException(Exceptions.fail("远程服务没有对应版本的实现"));
     } else {
       try {
