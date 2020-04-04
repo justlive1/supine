@@ -14,6 +14,7 @@
 
 package vip.justlive.supine.registry;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Random;
@@ -21,11 +22,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 import vip.justlive.oxygen.core.exception.Exceptions;
+import vip.justlive.oxygen.core.net.aio.core.Client;
+import vip.justlive.oxygen.core.net.aio.core.GroupContext;
 import vip.justlive.oxygen.core.util.ExpiringMap;
 import vip.justlive.oxygen.core.util.ExpiringMap.ExpiringPolicy;
+import vip.justlive.oxygen.core.util.ExpiringMap.RemovalCause;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.transport.ClientTransport;
 import vip.justlive.supine.transport.impl.AioClientTransport;
+import vip.justlive.supine.transport.impl.ClientHandler;
 
 /**
  * 抽象注册类
@@ -37,6 +42,21 @@ public abstract class AbstractRegistry implements Registry {
 
   private static final Random RANDOM = new Random();
   private ExpiringMap<InetSocketAddress, ClientTransport> transports;
+  private Client client;
+
+  @Override
+  public void start() throws IOException {
+    GroupContext groupContext = new GroupContext(new ClientHandler());
+    groupContext.setDaemon(true);
+    client = new Client(groupContext);
+  }
+
+  @Override
+  public void stop() {
+    if (client != null) {
+      client.close();
+    }
+  }
 
   void init(ClientConfig config) {
     this.transports = ExpiringMap.<InetSocketAddress, ClientTransport>builder()
@@ -69,7 +89,7 @@ public abstract class AbstractRegistry implements Registry {
     if (transport != null && !transport.isClosed()) {
       return transport;
     }
-    transport = new AioClientTransport();
+    transport = new AioClientTransport(client);
     try {
       transport.connect(address);
       transports.put(address, transport);
@@ -81,9 +101,9 @@ public abstract class AbstractRegistry implements Registry {
     return null;
   }
 
-  private void expired(InetSocketAddress address, ClientTransport transport) {
+  private void expired(InetSocketAddress address, ClientTransport transport, RemovalCause cause) {
     if (log.isDebugEnabled()) {
-      log.debug("[{}]连接空闲超时，关闭连接", address);
+      log.debug("[{}]连接失效[{}]，关闭连接", cause, address);
     }
     transport.close();
   }

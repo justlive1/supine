@@ -26,8 +26,8 @@
     <kryo.version>4.0.2</kryo.version>
     <kryo-serializers.version>0.45</kryo-serializers.version>
     <logback.version>1.2.3</logback.version>
-    <lombok.version>1.18.10</lombok.version>
-    <oxygen.version>2.1.7</oxygen.version>
+    <lombok.version>1.18.12</lombok.version>
+    <oxygen.version>2.1.11</oxygen.version>
     <slf4j.version>1.7.28</slf4j.version>
 
     <maven.compiler.source>${java.version}</maven.compiler.source>

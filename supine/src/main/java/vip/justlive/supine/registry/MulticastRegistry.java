@@ -61,7 +61,6 @@ public class MulticastRegistry extends AbstractRegistry {
   private long lastUpdated;
   private InetSocketAddress registryAddress;
 
-
   public MulticastRegistry(ServiceConfig config) {
     this.serviceConfig = config;
     this.clientConfig = null;
@@ -96,12 +95,32 @@ public class MulticastRegistry extends AbstractRegistry {
 
   @Override
   public void start() throws IOException {
+    super.start();
     schedule = ThreadUtils.newScheduledExecutor(1, "registry");
     if (serviceConfig != null) {
       service(serviceConfig);
     } else if (clientConfig != null) {
       client(clientConfig);
     }
+  }
+
+  @Override
+  public void stop() {
+    stopped = true;
+    registryInfo.getKeys().clear();
+    if (schedule != null) {
+      schedule.shutdown();
+    }
+    super.stop();
+  }
+
+  @Override
+  public ClientTransport discovery(RequestKey key) {
+    List<InetSocketAddress> addresses = requestToService.get(key);
+    if (addresses == null) {
+      throw Exceptions.fail("没有可用的服务提供者");
+    }
+    return load(addresses);
   }
 
   private void client(ClientConfig clientConfig) throws IOException {
@@ -139,24 +158,6 @@ public class MulticastRegistry extends AbstractRegistry {
 
     stopped = false;
     schedule.execute(new Sender());
-  }
-
-  @Override
-  public void stop() {
-    stopped = true;
-    registryInfo.getKeys().clear();
-    if (schedule != null) {
-      schedule.shutdown();
-    }
-  }
-
-  @Override
-  public ClientTransport discovery(RequestKey key) {
-    List<InetSocketAddress> addresses = requestToService.get(key);
-    if (addresses == null) {
-      throw Exceptions.fail("没有可用的服务提供者");
-    }
-    return load(addresses);
   }
 
   private class Sender implements Runnable {
@@ -221,8 +222,6 @@ public class MulticastRegistry extends AbstractRegistry {
       services.forEach(
           (k, v) -> v.forEach(item -> map.computeIfAbsent(item, rk -> new ArrayList<>()).add(k)));
       requestToService = map;
-
     }
-
   }
 }

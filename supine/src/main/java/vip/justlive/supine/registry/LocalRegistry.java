@@ -51,16 +51,6 @@ public class LocalRegistry extends AbstractRegistry {
   }
 
   @Override
-  public void start() {
-    // nothing
-  }
-
-  @Override
-  public void stop() {
-    // nothing
-  }
-
-  @Override
   public ClientTransport discovery(RequestKey key) {
     int size = socketAddresses.size();
     if (size == 0) {

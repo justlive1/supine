@@ -16,8 +16,9 @@ package vip.justlive.supine.transport.impl;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import lombok.RequiredArgsConstructor;
+import vip.justlive.oxygen.core.net.aio.core.ChannelContext;
 import vip.justlive.oxygen.core.net.aio.core.Client;
-import vip.justlive.oxygen.core.net.aio.core.GroupContext;
 import vip.justlive.oxygen.core.net.aio.protocol.LengthFrame;
 import vip.justlive.supine.codec.Serializer;
 import vip.justlive.supine.common.Request;
@@ -28,32 +29,31 @@ import vip.justlive.supine.transport.ClientTransport;
  *
  * @author wubo
  */
+@RequiredArgsConstructor
 public class AioClientTransport implements ClientTransport {
 
-  private Client client;
+  private final Client client;
+  private ChannelContext channel;
 
   @Override
   public void connect(InetSocketAddress address) throws IOException {
-    GroupContext groupContext = new GroupContext(new ClientHandler());
-    groupContext.setDaemon(true);
-    client = new Client(groupContext);
-    client.connect(address);
+    this.channel = client.connect(address);
   }
 
   @Override
   public void close() {
-    if (client != null) {
-      client.close();
+    if (channel != null) {
+      client.close(channel);
     }
   }
 
   @Override
   public boolean isClosed() {
-    return client == null || client.getGroupContext().isStopped();
+    return channel == null || channel.isClosed();
   }
 
   @Override
   public void send(Request request) {
-    client.write(new LengthFrame().setType(1).setBody(Serializer.def().encode(request)));
+    channel.write(new LengthFrame().setType(1).setBody(Serializer.def().encode(request)));
   }
 }
