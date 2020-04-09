@@ -117,7 +117,7 @@ public class ServiceFactory {
       for (Method method : methods) {
         Method realMethod = clazz.getDeclaredMethod(method.getName(), method.getParameterTypes());
         ServiceMethodInvoker.add(new RequestKey(version, interfaceType.getName(), method.getName(),
-            method.getParameterTypes()), service, realMethod);
+            method.getParameterTypes()).mark(), service, realMethod);
       }
     } catch (NoSuchMethodException e) {
       throw Exceptions.wrap(e);

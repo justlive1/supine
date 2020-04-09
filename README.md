@@ -80,6 +80,7 @@ config.setRegistryAddress("localhost:10086");
 // 是否异步调用，默认为同步
 config.setAsync(false);
 ReferenceFactory factory = new ReferenceFactory(config);
+factory.start();
 
 // 创建接口代理
 Say say = factory.create(Say.class);
@@ -98,7 +99,6 @@ config.setRegistryType(1);
 // 指定注册地址，不填则使用默认值（234.69.69.69:56969）
 config.setRegistryAddress("234.69.69.69:56969");
 ReferenceFactory factory = new ReferenceFactory(config);
-// 启动注册
 factory.start();
 
 // 创建指定版本的接口代理

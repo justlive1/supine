@@ -56,6 +56,6 @@ public class LocalRegistry extends AbstractRegistry {
     if (size == 0) {
       throw Exceptions.fail("没有可用的服务提供者");
     }
-    return load(socketAddresses);
+    return load(socketAddresses, key);
   }
 }

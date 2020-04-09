@@ -120,7 +120,7 @@ public class MulticastRegistry extends AbstractRegistry {
     if (addresses == null) {
       throw Exceptions.fail("没有可用的服务提供者");
     }
-    return load(addresses);
+    return load(addresses, key);
   }
 
   private void client(ClientConfig clientConfig) throws IOException {

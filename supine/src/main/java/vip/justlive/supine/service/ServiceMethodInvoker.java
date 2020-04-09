@@ -32,6 +32,7 @@ import vip.justlive.supine.common.RequestKey;
 public class ServiceMethodInvoker {
 
   private static final Map<RequestKey, ServiceMethodInvoker> SERVICES = new HashMap<>(4);
+  private static final Map<Integer, RequestKey> KEYS = new HashMap<>(4);
 
   private final Object service;
   private final Method method;
@@ -45,16 +46,21 @@ public class ServiceMethodInvoker {
    */
   static void add(RequestKey key, Object service, Method method) {
     SERVICES.put(key, new ServiceMethodInvoker(service, method));
+    KEYS.put(key.getId(), key);
   }
 
   /**
    * 查找服务调用方法
    *
-   * @param key 服务方法起那么
+   * @param id 服务方法id
    * @return 服务调用
    */
-  public static ServiceMethodInvoker lookup(RequestKey key) {
-    return SERVICES.get(key);
+  public static ServiceMethodInvoker lookup(Integer id) {
+    RequestKey key = KEYS.get(id);
+    if (key != null) {
+      return SERVICES.get(key);
+    }
+    return null;
   }
 
   /**
@@ -71,6 +77,7 @@ public class ServiceMethodInvoker {
    */
   static void clear() {
     SERVICES.clear();
+    KEYS.clear();
   }
 
   /**

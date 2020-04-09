@@ -28,6 +28,7 @@ import vip.justlive.oxygen.core.util.ExpiringMap;
 import vip.justlive.oxygen.core.util.ExpiringMap.ExpiringPolicy;
 import vip.justlive.oxygen.core.util.ExpiringMap.RemovalCause;
 import vip.justlive.supine.common.ClientConfig;
+import vip.justlive.supine.common.RequestKey;
 import vip.justlive.supine.transport.ClientTransport;
 import vip.justlive.supine.transport.impl.AioClientTransport;
 import vip.justlive.supine.transport.impl.ClientHandler;
@@ -65,7 +66,7 @@ public abstract class AbstractRegistry implements Registry {
         .asyncExpiredListeners(this::expired).build();
   }
 
-  ClientTransport load(List<InetSocketAddress> addresses) {
+  ClientTransport load(List<InetSocketAddress> addresses, RequestKey key) {
     int size = addresses.size();
     int index = RANDOM.nextInt(size);
     AtomicReference<Exception> reference = new AtomicReference<>();
@@ -73,7 +74,7 @@ public abstract class AbstractRegistry implements Registry {
       InetSocketAddress address = addresses.get(index);
       ClientTransport transport = get(address, reference);
       index = (index + 1) % addresses.size();
-      if (transport != null && !transport.isClosed()) {
+      if (transport != null && !transport.isClosed() && transport.lookup(key) != null) {
         return transport;
       }
     }

@@ -16,12 +16,13 @@ package vip.justlive.supine.transport.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import vip.justlive.oxygen.core.exception.Exceptions;
+import vip.justlive.oxygen.core.net.aio.core.AioListener;
 import vip.justlive.oxygen.core.net.aio.core.ChannelContext;
 import vip.justlive.oxygen.core.net.aio.protocol.LengthFrame;
 import vip.justlive.oxygen.core.net.aio.protocol.LengthFrameHandler;
 import vip.justlive.supine.codec.Serializer;
 import vip.justlive.supine.common.Request;
-import vip.justlive.supine.common.RequestKey;
+import vip.justlive.supine.common.RequestKeyWrapper;
 import vip.justlive.supine.common.Response;
 import vip.justlive.supine.service.ServiceMethodInvoker;
 
@@ -31,23 +32,26 @@ import vip.justlive.supine.service.ServiceMethodInvoker;
  * @author wubo
  */
 @Slf4j
-public class ServerHandler extends LengthFrameHandler {
+public class ServerHandler extends LengthFrameHandler implements AioListener {
+
+  @Override
+  public void onConnected(ChannelContext channelContext) {
+    channelContext.write(new LengthFrame().setType(Transport.ENDPOINT).setBody(
+        Serializer.def().encode(new RequestKeyWrapper(ServiceMethodInvoker.requestKeys()))));
+  }
 
   @Override
   public void handle(Object data, ChannelContext channelContext) {
     LengthFrame frame = (LengthFrame) data;
-    if (frame.getType() == -1) {
+    if (frame.getType() == Transport.BEAT) {
       // 心跳请求不处理
       return;
     }
     Request request = (Request) Serializer.def().decode(frame.getBody());
-    RequestKey key = new RequestKey(request.getVersion(), request.getClassName(),
-        request.getMethodName(), request.getArgTypes());
-    ServiceMethodInvoker invoker = ServiceMethodInvoker.lookup(key);
+    ServiceMethodInvoker invoker = ServiceMethodInvoker.lookup(request.getMid());
     Response response = new Response().setId(request.getId());
     if (invoker == null) {
-      log.warn("not found service for {} {} in {}", request, key,
-          ServiceMethodInvoker.requestKeys());
+      log.warn("not found service for {} in {}", request, ServiceMethodInvoker.requestKeys());
       response.setException(Exceptions.fail("远程服务没有对应版本的实现"));
     } else {
       try {
@@ -56,6 +60,7 @@ public class ServerHandler extends LengthFrameHandler {
         response.setException(e);
       }
     }
-    channelContext.write(new LengthFrame().setType(2).setBody(Serializer.def().encode(response)));
+    channelContext.write(new LengthFrame().setType(Transport.RESPONSE)
+        .setBody(Serializer.def().encode(response)));
   }
 }

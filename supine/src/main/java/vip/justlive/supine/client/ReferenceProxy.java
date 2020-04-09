@@ -16,6 +16,8 @@ package vip.justlive.supine.client;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.Data;
 import vip.justlive.oxygen.core.util.SnowflakeIdWorker;
@@ -37,6 +39,7 @@ public class ReferenceProxy implements InvocationHandler {
   private final ClientConfig config;
   private final Registry registry;
   private final String version;
+  private final Map<Method, RequestKey> keys = new ConcurrentHashMap<>(4);
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -45,17 +48,13 @@ public class ReferenceProxy implements InvocationHandler {
       return method.invoke(this, args);
     }
 
-    Request request = new Request().setVersion(version)
-        .setClassName(method.getDeclaringClass().getName()).setMethodName(method.getName())
-        .setArgTypes(method.getParameterTypes()).setArgs(args)
-        .setId(SnowflakeIdWorker.defaultNextId());
-
-    ClientTransport transport = registry.discovery(
-        new RequestKey(version, request.getClassName(), request.getMethodName(),
-            request.getArgTypes()));
-
+    Request request = new Request().setId(SnowflakeIdWorker.defaultNextId()).setArgs(args);
+    RequestKey key = keys.computeIfAbsent(method,
+        k -> new RequestKey(version, k.getDeclaringClass().getName(), k.getName(),
+            k.getParameterTypes()));
+    ClientTransport transport = registry.discovery(key);
+    request.setMid(transport.lookup(key));
     ResultFuture<?> resultFuture = new ResultFuture<>(method.getReturnType());
-
     if (config.isAsync()) {
       return async(request, resultFuture, transport);
     } else {

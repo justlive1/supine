@@ -31,7 +31,8 @@ public class AioServerTransport implements ServerTransport {
 
   @Override
   public void start(InetSocketAddress address) throws IOException {
-    GroupContext groupContext = new GroupContext(new ServerHandler());
+    ServerHandler handler = new ServerHandler();
+    GroupContext groupContext = new GroupContext(handler).setAioListener(handler);
     server = new Server(groupContext);
     server.start(address);
   }

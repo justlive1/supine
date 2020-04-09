@@ -22,6 +22,8 @@ import vip.justlive.oxygen.core.net.aio.core.Client;
 import vip.justlive.oxygen.core.net.aio.protocol.LengthFrame;
 import vip.justlive.supine.codec.Serializer;
 import vip.justlive.supine.common.Request;
+import vip.justlive.supine.common.RequestKey;
+import vip.justlive.supine.common.RequestKeyWrapper;
 import vip.justlive.supine.transport.ClientTransport;
 
 /**
@@ -38,6 +40,9 @@ public class AioClientTransport implements ClientTransport {
   @Override
   public void connect(InetSocketAddress address) throws IOException {
     this.channel = client.connect(address);
+    Transport transport = new Transport(channel);
+    this.channel.addAttr(Transport.class.getName(), transport);
+    transport.join();
   }
 
   @Override
@@ -54,6 +59,19 @@ public class AioClientTransport implements ClientTransport {
 
   @Override
   public void send(Request request) {
-    channel.write(new LengthFrame().setType(1).setBody(Serializer.def().encode(request)));
+    channel.write(
+        new LengthFrame().setType(Transport.REQUEST).setBody(Serializer.def().encode(request)));
+  }
+
+  @Override
+  public Integer lookup(RequestKey key) {
+    if (isClosed()) {
+      return null;
+    }
+    RequestKeyWrapper wrapper = (RequestKeyWrapper) channel.getAttr(RequestKey.class.getName());
+    if (wrapper != null) {
+      return wrapper.lookup(key);
+    }
+    return null;
   }
 }

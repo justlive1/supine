@@ -17,6 +17,7 @@ package vip.justlive.supine.transport;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import vip.justlive.supine.common.Request;
+import vip.justlive.supine.common.RequestKey;
 
 /**
  * 客户端传输
@@ -51,4 +52,12 @@ public interface ClientTransport {
    * @param request 请求
    */
   void send(Request request);
+
+  /**
+   * 获取方法id
+   *
+   * @param key 请求签名
+   * @return mid
+   */
+  Integer lookup(RequestKey key);
 }

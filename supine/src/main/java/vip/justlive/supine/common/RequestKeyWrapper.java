@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 the original author or authors.
+ * Copyright (C) 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -14,32 +14,25 @@
 
 package vip.justlive.supine.common;
 
-import java.io.Serializable;
-import lombok.Data;
-import lombok.experimental.Accessors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * rpc request
+ * request Key wrapper
  *
  * @author wubo
  */
-@Data
-@Accessors(chain = true)
-public class Request implements Serializable {
+public class RequestKeyWrapper {
 
-  private static final long serialVersionUID = 1L;
+  private final Map<RequestKey, Integer> keys;
 
-  /**
-   * 请求id
-   */
-  private long id;
-  /**
-   * 方法id
-   */
-  private int mid;
-  /**
-   * 方法调用参数
-   */
-  private Object[] args;
+  public RequestKeyWrapper(List<RequestKey> list) {
+    keys = new HashMap<>(4);
+    list.forEach(key -> keys.put(key, key.getId()));
+  }
 
+  public Integer lookup(RequestKey key) {
+    return keys.get(key);
+  }
 }

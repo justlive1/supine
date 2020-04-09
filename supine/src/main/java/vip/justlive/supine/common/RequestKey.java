@@ -17,7 +17,10 @@ package vip.justlive.supine.common;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 /**
@@ -30,7 +33,11 @@ import lombok.ToString;
 public class RequestKey implements Serializable {
 
   private static final long serialVersionUID = 1L;
+  private static final AtomicInteger IDS = new AtomicInteger(0);
 
+  @Getter
+  @Setter
+  private int id;
   /**
    * 版本号
    */
@@ -47,6 +54,11 @@ public class RequestKey implements Serializable {
    * 参数类型
    */
   private final Class<?>[] types;
+
+  public RequestKey mark() {
+    this.id = IDS.getAndIncrement();
+    return this;
+  }
 
   @Override
   public int hashCode() {

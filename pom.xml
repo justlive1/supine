@@ -6,7 +6,7 @@
 
   <groupId>vip.justlive</groupId>
   <artifactId>supine-parent</artifactId>
-  <version>1.0.4</version>
+  <version>1.1.0</version>
   <modules>
     <module>supine</module>
     <module>supine-spring</module>

@@ -18,6 +18,7 @@ import vip.justlive.oxygen.core.net.aio.core.ChannelContext;
 import vip.justlive.oxygen.core.net.aio.protocol.LengthFrame;
 import vip.justlive.oxygen.core.net.aio.protocol.LengthFrameHandler;
 import vip.justlive.supine.codec.Serializer;
+import vip.justlive.supine.common.RequestKey;
 import vip.justlive.supine.common.Response;
 import vip.justlive.supine.common.ResultFuture;
 
@@ -31,7 +32,14 @@ public class ClientHandler extends LengthFrameHandler {
   @Override
   public void handle(Object data, ChannelContext channelContext) {
     LengthFrame frame = (LengthFrame) data;
-    Response response = (Response) Serializer.def().decode(frame.getBody());
+    Object obj = Serializer.def().decode(frame.getBody());
+    if (frame.getType() == Transport.ENDPOINT) {
+      channelContext.addAttr(RequestKey.class.getName(), obj);
+      Transport transport = (Transport) channelContext.getAttr(Transport.class.getName());
+      transport.complete();
+      return;
+    }
+    Response response = (Response) obj;
     ResultFuture.complete(response);
   }
 }
