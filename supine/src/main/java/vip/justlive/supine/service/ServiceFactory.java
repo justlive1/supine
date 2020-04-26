@@ -79,7 +79,7 @@ public class ServiceFactory {
   public void register(Object service, String version) {
     Class<?> serviceType = service.getClass();
     Class<?>[] interfaces = serviceType.getInterfaces();
-    if (interfaces == null || interfaces.length == 0) {
+    if (interfaces.length == 0) {
       return;
     }
     for (Class<?> intf : interfaces) {

@@ -34,9 +34,11 @@ public class ClientHandler extends LengthFrameHandler {
     LengthFrame frame = (LengthFrame) data;
     Object obj = Serializer.def().decode(frame.getBody());
     if (frame.getType() == Transport.ENDPOINT) {
-      channelContext.addAttr(RequestKey.class.getName(), obj);
-      Transport transport = (Transport) channelContext.getAttr(Transport.class.getName());
-      transport.complete();
+      Transport transport = (Transport) channelContext.removeAttr(Transport.class.getName());
+      if (transport != null) {
+        channelContext.addAttr(RequestKey.class.getName(), obj);
+        transport.complete();
+      }
       return;
     }
     Response response = (Response) obj;

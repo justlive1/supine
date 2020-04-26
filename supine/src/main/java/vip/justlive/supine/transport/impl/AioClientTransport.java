@@ -16,6 +16,9 @@ package vip.justlive.supine.transport.impl;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.RequiredArgsConstructor;
 import vip.justlive.oxygen.core.net.aio.core.ChannelContext;
 import vip.justlive.oxygen.core.net.aio.core.Client;
@@ -42,13 +45,17 @@ public class AioClientTransport implements ClientTransport {
     this.channel = client.connect(address);
     Transport transport = new Transport(channel);
     this.channel.addAttr(Transport.class.getName(), transport);
-    transport.join();
+    try {
+      transport.join(5, TimeUnit.SECONDS);
+    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+      throw new IOException(e);
+    }
   }
 
   @Override
   public void close() {
     if (channel != null) {
-      client.close(channel);
+      channel.close();
     }
   }
 

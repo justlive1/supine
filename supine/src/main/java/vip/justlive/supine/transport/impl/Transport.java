@@ -15,6 +15,9 @@
 package vip.justlive.supine.transport.impl;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.RequiredArgsConstructor;
 import vip.justlive.oxygen.core.net.aio.core.ChannelContext;
 
@@ -32,20 +35,17 @@ public class Transport {
   public static final int ENDPOINT = 3;
 
   private final ChannelContext channel;
-  private CompletableFuture<Void> future = new CompletableFuture<>();
+  private final CompletableFuture<Void> future = new CompletableFuture<>();
 
-  public void join() {
+  public void join(long timeout, TimeUnit unit)
+      throws InterruptedException, ExecutionException, TimeoutException {
     if (channel != null) {
       channel.join();
     }
-    if (future != null) {
-      future.join();
-    }
+    future.get(timeout, unit);
   }
 
   public void complete() {
-    if (future != null) {
-      future.complete(null);
-    }
+    future.complete(null);
   }
 }
