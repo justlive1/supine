@@ -28,9 +28,10 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.ExpiringMap;
+import vip.justlive.oxygen.core.util.MoreObjects;
 import vip.justlive.oxygen.core.util.SystemUtils;
 import vip.justlive.oxygen.core.util.ThreadUtils;
-import vip.justlive.supine.codec.Serializer;
+import vip.justlive.supine.codec.KryoSerializer;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.common.RegistryInfo;
 import vip.justlive.supine.common.RequestKey;
@@ -64,11 +65,13 @@ public class MulticastRegistry extends AbstractRegistry {
   public MulticastRegistry(ServiceConfig config) {
     this.serviceConfig = config;
     this.clientConfig = null;
+    this.serializer = MoreObjects.firstNonNull(config.getSerializer(), KryoSerializer.INSTANCE);
   }
 
   public MulticastRegistry(ClientConfig config) {
     this.serviceConfig = null;
     this.clientConfig = config;
+    this.serializer = MoreObjects.firstNonNull(config.getSerializer(), KryoSerializer.INSTANCE);
     this.services = ExpiringMap.<InetSocketAddress, List<RequestKey>>builder()
         .expiration(INTERVAL * 2, TimeUnit.MILLISECONDS).build();
     this.requestToService = new HashMap<>(2);
@@ -79,7 +82,7 @@ public class MulticastRegistry extends AbstractRegistry {
   public void register(List<RequestKey> keys) {
     this.registryInfo.getKeys().addAll(keys);
     if (packet != null) {
-      byte[] data = Serializer.def().encode(registryInfo);
+      byte[] data = serializer.encode(registryInfo);
       packet = new DatagramPacket(data, data.length, registryAddress);
     }
   }
@@ -88,7 +91,7 @@ public class MulticastRegistry extends AbstractRegistry {
   public void unregister(List<RequestKey> keys) {
     this.registryInfo.getKeys().removeAll(keys);
     if (packet != null) {
-      byte[] data = Serializer.def().encode(registryInfo);
+      byte[] data = serializer.encode(registryInfo);
       packet = new DatagramPacket(data, data.length, registryAddress);
     }
   }
@@ -153,7 +156,7 @@ public class MulticastRegistry extends AbstractRegistry {
       registryAddress = SystemUtils.parseAddress(config.getRegistryAddress());
     }
 
-    byte[] data = Serializer.def().encode(registryInfo);
+    byte[] data = serializer.encode(registryInfo);
     packet = new DatagramPacket(data, data.length, registryAddress);
 
     stopped = false;
@@ -200,7 +203,7 @@ public class MulticastRegistry extends AbstractRegistry {
         return;
       }
       final byte[] data = packet.getData();
-      RegistryInfo info = (RegistryInfo) Serializer.def().decode(data);
+      RegistryInfo info = (RegistryInfo) serializer.decode(data);
 
       if (log.isDebugEnabled()) {
         log.debug("注册中心获取到一个服务地址 -> [{}:{}]", info.getHost(), info.getPort());

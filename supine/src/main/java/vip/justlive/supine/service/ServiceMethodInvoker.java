@@ -14,13 +14,11 @@
 
 package vip.justlive.supine.service;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.Data;
 import vip.justlive.supine.common.RequestKey;
 
 /**
@@ -28,14 +26,16 @@ import vip.justlive.supine.common.RequestKey;
  *
  * @author wubo
  */
-@Data
 public class ServiceMethodInvoker {
 
   private static final Map<RequestKey, ServiceMethodInvoker> SERVICES = new HashMap<>(4);
   private static final Map<Integer, RequestKey> KEYS = new HashMap<>(4);
 
-  private final Object service;
-  private final Method method;
+  private final Invoker invoke;
+
+  public ServiceMethodInvoker(Object service, Method method) {
+    this.invoke = new JavassistInvoker(service, method);
+  }
 
   /**
    * 添加服务调用
@@ -85,11 +85,9 @@ public class ServiceMethodInvoker {
    *
    * @param args 参数
    * @return 结果
-   * @throws InvocationTargetException 反射异常
-   * @throws IllegalAccessException 反射异常
    */
-  public Object invoke(Object[] args) throws InvocationTargetException, IllegalAccessException {
-    return method.invoke(service, args);
+  public Object invoke(Object[] args) {
+    return invoke.invoke(args);
   }
 
 }

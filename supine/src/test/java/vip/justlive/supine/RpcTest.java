@@ -32,7 +32,7 @@ import vip.justlive.supine.service.ServiceFactory;
 public class RpcTest {
 
   @Test
-  public void testLocal()  {
+  public void testLocal() {
     ServiceConfig serviceConfig = new ServiceConfig("localhost", 10086);
     ServiceFactory serviceFactory = new ServiceFactory(serviceConfig);
     registry(serviceFactory);
@@ -79,7 +79,8 @@ public class RpcTest {
     factory.start();
 
     ServiceConfig serviceConfig = new ServiceConfig(10086);
-    ServiceFactory serviceFactory = new ServiceFactory(serviceConfig, new MulticastRegistry(serviceConfig));
+    ServiceFactory serviceFactory = new ServiceFactory(serviceConfig,
+        new MulticastRegistry(serviceConfig));
     registry(serviceFactory);
 
     new Thread(() -> {

@@ -16,6 +16,7 @@ package vip.justlive.supine.common;
 
 import lombok.Getter;
 import lombok.Setter;
+import vip.justlive.supine.codec.Serializer;
 
 /**
  * 配置
@@ -39,5 +40,7 @@ public class Config {
    * 注册地址
    */
   private String registryAddress;
+
+  private Serializer serializer;
 
 }

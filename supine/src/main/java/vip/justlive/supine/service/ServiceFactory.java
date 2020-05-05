@@ -18,7 +18,9 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.util.ClassUtils;
+import vip.justlive.oxygen.core.util.MoreObjects;
 import vip.justlive.oxygen.core.util.Strings;
+import vip.justlive.supine.codec.KryoSerializer;
 import vip.justlive.supine.common.RequestKey;
 import vip.justlive.supine.common.ServiceConfig;
 import vip.justlive.supine.registry.MulticastRegistry;
@@ -134,7 +136,8 @@ public class ServiceFactory {
       return;
     }
     state = true;
-    transport = new AioServerTransport();
+    transport = new AioServerTransport(
+        MoreObjects.firstNonNull(config.getSerializer(), KryoSerializer.INSTANCE));
     transport.start(config.getHost(), config.getPort());
     if (registry != null) {
       registry.register(ServiceMethodInvoker.requestKeys());

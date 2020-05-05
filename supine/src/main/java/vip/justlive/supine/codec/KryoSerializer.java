@@ -33,9 +33,9 @@ import vip.justlive.oxygen.core.exception.Exceptions;
  */
 public class KryoSerializer implements Serializer {
 
-  static final KryoSerializer INSTANCE = new KryoSerializer();
+  public static final KryoSerializer INSTANCE = new KryoSerializer();
 
-  private KryoPool pool = new KryoPool.Builder(this::create).softReferences().build();
+  private final KryoPool pool = new KryoPool.Builder(this::create).softReferences().build();
 
   private Kryo create() {
     Kryo kryo = new Kryo();

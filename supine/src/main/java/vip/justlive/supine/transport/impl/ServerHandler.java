@@ -14,8 +14,10 @@
 
 package vip.justlive.supine.transport.impl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import vip.justlive.oxygen.core.exception.Exceptions;
+import vip.justlive.oxygen.core.exception.WrappedException;
 import vip.justlive.oxygen.core.net.aio.core.AioListener;
 import vip.justlive.oxygen.core.net.aio.core.ChannelContext;
 import vip.justlive.oxygen.core.net.aio.protocol.LengthFrame;
@@ -32,12 +34,15 @@ import vip.justlive.supine.service.ServiceMethodInvoker;
  * @author wubo
  */
 @Slf4j
+@RequiredArgsConstructor
 public class ServerHandler extends LengthFrameHandler implements AioListener {
+
+  private final Serializer serializer;
 
   @Override
   public void onConnected(ChannelContext channelContext) {
-    channelContext.write(new LengthFrame().setType(Transport.ENDPOINT).setBody(
-        Serializer.def().encode(new RequestKeyWrapper(ServiceMethodInvoker.requestKeys()))));
+    channelContext.write(new LengthFrame().setType(Transport.ENDPOINT)
+        .setBody(serializer.encode(new RequestKeyWrapper(ServiceMethodInvoker.requestKeys()))));
   }
 
   @Override
@@ -47,7 +52,7 @@ public class ServerHandler extends LengthFrameHandler implements AioListener {
       // 心跳请求不处理
       return;
     }
-    Request request = (Request) Serializer.def().decode(frame.getBody());
+    Request request = (Request) serializer.decode(frame.getBody());
     ServiceMethodInvoker invoker = ServiceMethodInvoker.lookup(request.getMid());
     Response response = new Response().setId(request.getId());
     if (invoker == null) {
@@ -57,10 +62,14 @@ public class ServerHandler extends LengthFrameHandler implements AioListener {
       try {
         response.setResult(invoker.invoke(request.getArgs()));
       } catch (Throwable e) {
-        response.setException(e);
+        if (e instanceof WrappedException) {
+          response.setException(((WrappedException) e).getException());
+        } else {
+          response.setException(e);
+        }
       }
     }
-    channelContext.write(new LengthFrame().setType(Transport.RESPONSE)
-        .setBody(Serializer.def().encode(response)));
+    channelContext
+        .write(new LengthFrame().setType(Transport.RESPONSE).setBody(serializer.encode(response)));
   }
 }

@@ -38,6 +38,7 @@ import vip.justlive.supine.transport.ClientTransport;
 public class AioClientTransport implements ClientTransport {
 
   private final Client client;
+  private final Serializer serializer;
   private ChannelContext channel;
 
   @Override
@@ -66,8 +67,7 @@ public class AioClientTransport implements ClientTransport {
 
   @Override
   public void send(Request request) {
-    channel.write(
-        new LengthFrame().setType(Transport.REQUEST).setBody(Serializer.def().encode(request)));
+    channel.write(new LengthFrame().setType(Transport.REQUEST).setBody(serializer.encode(request)));
   }
 
   @Override

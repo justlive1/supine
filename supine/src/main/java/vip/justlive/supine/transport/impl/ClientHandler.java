@@ -14,6 +14,7 @@
 
 package vip.justlive.supine.transport.impl;
 
+import lombok.RequiredArgsConstructor;
 import vip.justlive.oxygen.core.net.aio.core.ChannelContext;
 import vip.justlive.oxygen.core.net.aio.protocol.LengthFrame;
 import vip.justlive.oxygen.core.net.aio.protocol.LengthFrameHandler;
@@ -27,12 +28,15 @@ import vip.justlive.supine.common.ResultFuture;
  *
  * @author wubo
  */
+@RequiredArgsConstructor
 public class ClientHandler extends LengthFrameHandler {
+
+  private final Serializer serializer;
 
   @Override
   public void handle(Object data, ChannelContext channelContext) {
     LengthFrame frame = (LengthFrame) data;
-    Object obj = Serializer.def().decode(frame.getBody());
+    Object obj = serializer.decode(frame.getBody());
     if (frame.getType() == Transport.ENDPOINT) {
       Transport transport = (Transport) channelContext.removeAttr(Transport.class.getName());
       if (transport != null) {

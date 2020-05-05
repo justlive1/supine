@@ -27,6 +27,7 @@ import vip.justlive.oxygen.core.net.aio.core.GroupContext;
 import vip.justlive.oxygen.core.util.ExpiringMap;
 import vip.justlive.oxygen.core.util.ExpiringMap.ExpiringPolicy;
 import vip.justlive.oxygen.core.util.ExpiringMap.RemovalCause;
+import vip.justlive.supine.codec.Serializer;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.common.RequestKey;
 import vip.justlive.supine.transport.ClientTransport;
@@ -42,12 +43,13 @@ import vip.justlive.supine.transport.impl.ClientHandler;
 public abstract class AbstractRegistry implements Registry {
 
   private static final Random RANDOM = new Random();
+  protected Serializer serializer;
   private ExpiringMap<InetSocketAddress, ClientTransport> transports;
   private Client client;
 
   @Override
   public void start() throws IOException {
-    GroupContext groupContext = new GroupContext(new ClientHandler());
+    GroupContext groupContext = new GroupContext(new ClientHandler(serializer));
     groupContext.setDaemon(true);
     client = new Client(groupContext);
   }
@@ -90,7 +92,7 @@ public abstract class AbstractRegistry implements Registry {
     if (transport != null && !transport.isClosed()) {
       return transport;
     }
-    transport = new AioClientTransport(client);
+    transport = new AioClientTransport(client, serializer);
     try {
       transport.connect(address);
       transports.put(address, transport);

@@ -22,15 +22,6 @@ package vip.justlive.supine.codec;
 public interface Serializer {
 
   /**
-   * 默认实现
-   *
-   * @return serializer
-   */
-  static Serializer def() {
-    return KryoSerializer.INSTANCE;
-  }
-
-  /**
    * 序列化
    *
    * @param obj 对象
