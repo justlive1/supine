@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
@@ -33,7 +34,8 @@ public class ResultFuture<T> {
   private static final Map<Long, ResultFuture<?>> FUTURES = new ConcurrentHashMap<>();
   private static final ThreadLocal<ResultFuture<?>> LOCAL = new ThreadLocal<>();
 
-  private final Class<T> clazz;
+  @Getter
+  private final Class<T> type;
   private final CompletableFuture<Response> future;
 
   @Setter
@@ -41,8 +43,8 @@ public class ResultFuture<T> {
   @Setter
   private Consumer<Throwable> onFailure;
 
-  public ResultFuture(Class<T> clazz) {
-    this.clazz = clazz;
+  public ResultFuture(Class<T> type) {
+    this.type = type;
     this.future = new CompletableFuture<>();
   }
 
@@ -114,7 +116,7 @@ public class ResultFuture<T> {
     if (response.hasError()) {
       throw response.getException();
     } else {
-      return clazz.cast(response.getResult());
+      return cast(response.getResult());
     }
   }
 
@@ -131,7 +133,7 @@ public class ResultFuture<T> {
     if (response.hasError()) {
       throw response.getException();
     } else {
-      return clazz.cast(response.getResult());
+      return cast(response.getResult());
     }
   }
 
@@ -141,7 +143,12 @@ public class ResultFuture<T> {
       onFailure.accept(response.getException());
     }
     if (onSuccess != null && !response.hasError()) {
-      onSuccess.accept(clazz.cast(response.getResult()));
+      onSuccess.accept(cast(response.getResult()));
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private T cast(Object result) {
+    return (T) result;
   }
 }

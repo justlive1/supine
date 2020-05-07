@@ -28,6 +28,26 @@ public class SayImpl implements Say {
     return h(msg);
   }
 
+  @Override
+  public int test0(int input) {
+    return -input;
+  }
+
+  @Override
+  public Integer test1(Integer input) {
+    return input;
+  }
+
+  @Override
+  public void test2(long arg0, Long arg1) {
+
+  }
+
+  @Override
+  public long test3() {
+    return 3L;
+  }
+
   void def() {
     System.out.println("def");
   }

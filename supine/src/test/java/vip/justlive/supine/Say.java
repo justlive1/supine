@@ -25,4 +25,11 @@ public interface Say {
 
   String hello(String msg);
 
+  int test0(int input);
+
+  Integer test1(Integer input);
+
+  void test2(long arg0, Long arg1);
+
+  long test3();
 }

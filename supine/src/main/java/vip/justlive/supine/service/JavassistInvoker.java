@@ -91,14 +91,14 @@ public class JavassistInvoker implements Invoker {
   private void param(StringBuilder result, int index, Class<?> type) {
     result.append("((").append(ClassUtils.wrap(type).getName()).append(")").append("args[")
         .append(index).append("])");
-    if (ClassUtils.isPrimitive(type)) {
+    if (ClassUtils.allPrimitiveTypes().contains(type)) {
       result.append(".").append(type.getName()).append("Value()");
     }
   }
 
   private void result(StringBuilder invokeMethod, StringBuilder result, Class<?> type) {
     String str = result.toString();
-    if (ClassUtils.isPrimitive(type) && type != void.class) {
+    if (ClassUtils.allPrimitiveTypes().contains(type) && type != void.class) {
       invokeMethod.append("return ").append(ClassUtils.wrap(type).getName()).append(".valueOf(")
           .append(str).append(")");
     } else if (type == void.class) {

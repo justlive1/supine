@@ -27,4 +27,24 @@ public class SayImpl2 implements Say {
     return "2:" + msg;
   }
 
+  @Override
+  public int test0(int input) {
+    return 0;
+  }
+
+  @Override
+  public Integer test1(Integer input) {
+    return null;
+  }
+
+  @Override
+  public void test2(long arg0, Long arg1) {
+
+  }
+
+  @Override
+  public long test3() {
+    return 0;
+  }
+
 }

@@ -52,6 +52,11 @@ public class RpcTest {
     String msg = "say";
     Assert.assertEquals(msg, say.hello(msg));
 
+    Assert.assertEquals(-12, say.test0(12));
+    Assert.assertEquals(new Integer(12), say.test1(12));
+    Assert.assertEquals(3L, say.test3());
+    say.test2(3L, null);
+
     System.out.println(say.hashCode());
 
     Say say2 = factory.create(Say.class, "1");
