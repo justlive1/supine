@@ -14,17 +14,18 @@
 
 package vip.justlive.jmh.rpc;
 
-import com.weibo.api.motan.transport.async.MotanAsync;
+import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 /**
  * @author wubo
  */
-@MotanAsync
-public interface FooService {
+@Data
+@AllArgsConstructor
+public class FullName implements Serializable {
 
-  void empty();
-
-  String str(String str);
-
-  Object obj(Object obj);
+  private static final long serialVersionUID = -1664399126573598958L;
+  private String firstName;
+  private String lastName;
 }

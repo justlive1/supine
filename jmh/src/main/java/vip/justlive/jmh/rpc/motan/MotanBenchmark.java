@@ -32,6 +32,7 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import vip.justlive.jmh.rpc.FooServiceAsync;
+import vip.justlive.jmh.rpc.Objs;
 
 /**
  * @author wubo
@@ -61,8 +62,23 @@ public class MotanBenchmark {
   }
 
   @Benchmark
-  public void run() {
-    fooService.helloAsync("jmh").getValue();
+  public void empty() {
+    fooService.emptyAsync().getValue();
+  }
+
+  @Benchmark
+  public void str1k() {
+    fooService.strAsync(Objs.str1k).getValue();
+  }
+
+  @Benchmark
+  public void str10k() {
+    fooService.strAsync(Objs.str10k).getValue();
+  }
+
+  @Benchmark
+  public void obj() {
+    fooService.objAsync(Objs.person).getValue();
   }
 
   public static void main(String[] args) throws RunnerException {

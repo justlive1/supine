@@ -72,7 +72,6 @@ public class JavassistInvoker implements Invoker {
 
     StringBuilder invokeMethod = new StringBuilder();
     invokeMethod.append("public Object invoke(Object[] args) {\r\n");
-    invokeMethod.append("return ");
 
     StringBuilder result = new StringBuilder("target.").append(method.getName()).append("(");
     Class<?>[] params = method.getParameterTypes();
@@ -83,7 +82,8 @@ public class JavassistInvoker implements Invoker {
       }
     }
     result.append(")");
-    invokeMethod.append(result(result, method.getReturnType())).append(";\r\n}");
+    result(invokeMethod, result, method.getReturnType());
+    invokeMethod.append(";\r\n}");
     invokerClass.addMethod(CtNewMethod.make(invokeMethod.toString(), invokerClass));
     return (Invoker) invokerClass.toClass().getConstructor(target.getClass()).newInstance(target);
   }
@@ -96,12 +96,16 @@ public class JavassistInvoker implements Invoker {
     }
   }
 
-  private String result(StringBuilder result, Class<?> type) {
+  private void result(StringBuilder invokeMethod, StringBuilder result, Class<?> type) {
     String str = result.toString();
-    if (!ClassUtils.isPrimitive(type)) {
-      return str;
+    if (ClassUtils.isPrimitive(type) && type != void.class) {
+      invokeMethod.append("return ").append(ClassUtils.wrap(type).getName()).append(".valueOf(")
+          .append(str).append(")");
+    } else if (type == void.class) {
+      invokeMethod.append(str).append(";\r\nreturn null");
+    } else {
+      invokeMethod.append("return ").append(str);
     }
-    return ClassUtils.wrap(type).getName() + ".valueOf(" + str + ")";
   }
 
 }

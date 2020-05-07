@@ -32,6 +32,7 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import vip.justlive.jmh.rpc.FooService;
+import vip.justlive.jmh.rpc.Objs;
 import vip.justlive.supine.client.ReferenceFactory;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.common.ResultFuture;
@@ -70,8 +71,26 @@ public class SupineBenchmark {
   }
 
   @Benchmark
-  public void run() throws Throwable {
-    fooService.hello("jmh");
+  public void empty() throws Throwable {
+    fooService.empty();
+    ResultFuture.future().get();
+  }
+
+  @Benchmark
+  public void str1k() throws Throwable {
+    fooService.str(Objs.str1k);
+    ResultFuture.future().get();
+  }
+
+  @Benchmark
+  public void str10k() throws Throwable {
+    fooService.str(Objs.str10k);
+    ResultFuture.future().get();
+  }
+
+  @Benchmark
+  public void obj() throws Throwable {
+    fooService.obj(Objs.person);
     ResultFuture.future().get();
   }
 

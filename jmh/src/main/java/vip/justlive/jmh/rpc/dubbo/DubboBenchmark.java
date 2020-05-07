@@ -33,6 +33,7 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import vip.justlive.jmh.rpc.FooService;
+import vip.justlive.jmh.rpc.Objs;
 
 /**
  * @author wubo
@@ -62,8 +63,26 @@ public class DubboBenchmark {
   }
 
   @Benchmark
-  public void run() throws Exception {
-    fooService.hello("jmh");
+  public void empty() throws Exception {
+    fooService.empty();
+    RpcContext.getContext().getFuture().get(15, TimeUnit.SECONDS);
+  }
+
+  @Benchmark
+  public void str1k() throws Exception {
+    fooService.str(Objs.str1k);
+    RpcContext.getContext().getFuture().get(15, TimeUnit.SECONDS);
+  }
+
+  @Benchmark
+  public void str10k() throws Exception {
+    fooService.str(Objs.str10k);
+    RpcContext.getContext().getFuture().get(15, TimeUnit.SECONDS);
+  }
+
+  @Benchmark
+  public void obj() throws Exception {
+    fooService.obj(Objs.person);
     RpcContext.getContext().getFuture().get(15, TimeUnit.SECONDS);
   }
 

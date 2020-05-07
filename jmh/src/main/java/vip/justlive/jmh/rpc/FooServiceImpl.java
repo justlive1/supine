@@ -17,10 +17,19 @@ package vip.justlive.jmh.rpc;
 /**
  * @author wubo
  */
-public class FooServiceImpl implements FooService{
+public class FooServiceImpl implements FooService {
 
   @Override
-  public String hello(String name) {
-    return "hello " + name;
+  public void empty() {
+  }
+
+  @Override
+  public String str(String str) {
+    return str;
+  }
+
+  @Override
+  public Object obj(Object obj) {
+    return obj;
   }
 }

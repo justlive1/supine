@@ -4,11 +4,14 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>vip.justlive</groupId>
-  <artifactId>supine-jmh</artifactId>
-  <version>1.1.1</version>
-  <packaging>jar</packaging>
 
+  <parent>
+    <artifactId>supine-parent</artifactId>
+    <groupId>vip.justlive</groupId>
+    <version>1.1.1</version>
+  </parent>
+
+  <artifactId>supine-jmh</artifactId>
   <name>supine-jmh</name>
   <url>http://www.justlive.vip</url>
   <description>supine parent pom</description>
@@ -96,7 +99,6 @@
     <dependency>
       <groupId>vip.justlive</groupId>
       <artifactId>supine</artifactId>
-      <version>${project.version}</version>
     </dependency>
 
     <dependency>
@@ -148,7 +150,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
+        <version>3.8.1</version>
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
