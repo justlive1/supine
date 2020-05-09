@@ -16,15 +16,11 @@ package vip.justlive.supine.codec;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Kryo.DefaultInstantiatorStrategy;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.io.FastInput;
+import com.esotericsoftware.kryo.io.FastOutput;
 import com.esotericsoftware.kryo.pool.KryoPool;
 import de.javakaffee.kryoserializers.UnmodifiableCollectionsSerializer;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import org.objenesis.strategy.StdInstantiatorStrategy;
-import vip.justlive.oxygen.core.exception.Exceptions;
 
 /**
  * kryo序列化实现
@@ -49,12 +45,9 @@ public class KryoSerializer implements Serializer {
   @Override
   public byte[] encode(Object obj) {
     return pool.run(kryo -> {
-      try (ByteArrayOutputStream os = new ByteArrayOutputStream(); Output output = new Output(os)) {
+      try (FastOutput output = new FastOutput(64, -1)) {
         kryo.writeClassAndObject(output, obj);
-        output.flush();
-        return os.toByteArray();
-      } catch (IOException e) {
-        throw Exceptions.wrap(e);
+        return output.toBytes();
       }
     });
   }
@@ -63,10 +56,8 @@ public class KryoSerializer implements Serializer {
   @Override
   public Object decode(byte[] bytes) {
     return pool.run(kryo -> {
-      try (ByteArrayInputStream is = new ByteArrayInputStream(bytes); Input input = new Input(is)) {
+      try (FastInput input = new FastInput(bytes)) {
         return kryo.readClassAndObject(input);
-      } catch (IOException e) {
-        throw Exceptions.wrap(e);
       }
     });
   }

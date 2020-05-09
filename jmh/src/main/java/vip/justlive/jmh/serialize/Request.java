@@ -15,7 +15,8 @@
 package vip.justlive.jmh.serialize;
 
 import java.io.Serializable;
-import java.util.Map;
+import java.util.Date;
+import java.util.List;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -29,8 +30,14 @@ public class Request implements Serializable {
   private static final long serialVersionUID = 1773129302314578747L;
 
   private long id;
-  private String url;
-  private String method;
-  private Map<String, String> headers;
-  private String body;
+  private String name;
+  private int sex;
+  private String email;
+  private String mobile;
+  private String address;
+  private String icon;
+  private List<Integer> permissions;
+  private int status;
+  private Date createTime;
+  private Date updateTime;
 }

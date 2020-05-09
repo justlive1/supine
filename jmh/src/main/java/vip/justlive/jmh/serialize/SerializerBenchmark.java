@@ -14,19 +14,22 @@
 
 package vip.justlive.jmh.serialize;
 
-import static com.alibaba.fastjson.serializer.SerializerFeature.WriteClassName;
-
 import com.alibaba.fastjson.JSON;
+import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Output;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.esotericsoftware.kryo.io.FastInput;
+import com.esotericsoftware.kryo.io.FastOutput;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.nustaq.serialization.FSTConfiguration;
@@ -44,7 +47,6 @@ import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-import vip.justlive.oxygen.core.util.MoreObjects;
 
 /**
  * @author wubo
@@ -58,36 +60,48 @@ import vip.justlive.oxygen.core.util.MoreObjects;
 @State(Scope.Benchmark)
 public class SerializerBenchmark {
 
-  private static final Request REQUEST;
-  private static final List<Request> LIST;
-  private static final Gson GSON;
+  private static Object OBJ;
   private static final ObjectMapper OBJECT_MAPPER;
+  private static final Gson GSON;
   private static final Kryo KRYO;
   private static final FSTConfiguration FST;
 
   static {
-    REQUEST = new Request();
-    REQUEST.setId(System.currentTimeMillis());
-    REQUEST.setMethod("post");
-    REQUEST.setUrl("http://localhost:8080/api");
-    REQUEST.setBody("key=123&value=5674");
-    REQUEST.setHeaders(MoreObjects.mapOf("x-id", "xet1", "token", "cg42145"));
 
-    LIST = new ArrayList<>();
-    for (int i = 0; i < 100; i++) {
-      LIST.add(new Request().setId(i).setMethod("get").setUrl("http://localhost:1234/api")
-          .setBody("xetx=2414124&sdgage=134").setHeaders(MoreObjects.mapOf("k", "1", "v", "@")));
+    List<Request> list = new ArrayList<>();
+    for (int i = 0; i < 20; i++) {
+      list.add(build());
     }
 
+    OBJ = build();
+//    OBJ = list;
     GSON = new Gson();
     OBJECT_MAPPER = new ObjectMapper();
     KRYO = new Kryo();
+    KRYO.setReferences(false);
     FST = FSTConfiguration.createDefaultConfiguration();
   }
 
   public static void main(String[] args) throws RunnerException {
     new Runner(new OptionsBuilder().include(SerializerBenchmark.class.getSimpleName()).build())
         .run();
+  }
+
+  static Request build() {
+    Request request = new Request();
+    request.setId(System.currentTimeMillis());
+    request.setName("Jmh");
+    request.setSex(1);
+    request.setEmail("jmh@gmail.com");
+    request.setMobile("1899999999");
+    request.setAddress("广州市天河区猎德");
+    request.setIcon("https://www.baidu.com/img/bd_logo1.png");
+    request.setStatus(1);
+    request.setCreateTime(new Date());
+    request.setUpdateTime(request.getCreateTime());
+    request.setPermissions(new ArrayList<>(
+        Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 19, 88, 86, 89, 90, 91, 92)));
+    return request;
   }
 
   @TearDown
@@ -103,79 +117,84 @@ public class SerializerBenchmark {
   }
 
   @Benchmark
-  public byte[] jdk() throws IOException {
+  public byte[] jdk() throws Exception {
+    byte[] bytes;
     try (ByteArrayOutputStream out = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(
         out)) {
-      oos.writeObject(LIST);
-      out.toByteArray();
+      oos.writeObject(OBJ);
+      bytes = out.toByteArray();
     }
-    try (ByteArrayOutputStream out = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(
-        out)) {
-      oos.writeObject(REQUEST);
-      return out.toByteArray();
+    try (ByteArrayInputStream in = new ByteArrayInputStream(
+        bytes); ObjectInputStream oin = new ObjectInputStream(in)) {
+      oin.readObject();
     }
+    return bytes;
   }
 
   @Benchmark
   public byte[] fastjson() {
-    JSON.toJSONBytes(LIST, WriteClassName);
-    return JSON.toJSONBytes(REQUEST, WriteClassName);
+    byte[] bytes = JSON.toJSONBytes(OBJ);
+    JSON.parse(bytes);
+    return bytes;
   }
 
   @Benchmark
-  public byte[] jackson() throws JsonProcessingException {
-    OBJECT_MAPPER.writeValueAsBytes(LIST);
-    return OBJECT_MAPPER.writeValueAsBytes(REQUEST);
+  public byte[] jackson() throws IOException {
+    byte[] bytes = OBJECT_MAPPER.writeValueAsBytes(OBJ);
+    OBJECT_MAPPER.readValue(bytes, OBJ.getClass());
+    return bytes;
   }
 
   @Benchmark
   public byte[] gson() {
-    GSON.toJson(LIST).getBytes();
-    return GSON.toJson(REQUEST).getBytes();
+    byte[] bytes = GSON.toJson(OBJ).getBytes();
+    GSON.fromJson(new String(bytes), OBJ.getClass());
+    return bytes;
   }
 
   @Benchmark
-  public byte[] kryo() throws IOException {
-    try (ByteArrayOutputStream os = new ByteArrayOutputStream(); Output output = new Output(os)) {
-      KRYO.writeObject(output, LIST);
-      output.flush();
-      os.toByteArray();
+  public byte[] kryo() {
+    byte[] bytes;
+    try (FastOutput output = new FastOutput(64, -1)) {
+      KRYO.writeObject(output, OBJ);
+      bytes = output.toBytes();
     }
-    try (ByteArrayOutputStream os = new ByteArrayOutputStream(); Output output = new Output(os)) {
-      KRYO.writeObject(output, REQUEST);
-      output.flush();
-      return os.toByteArray();
+    try (FastInput input = new FastInput(bytes)) {
+      KRYO.readObject(input, OBJ.getClass());
     }
+    return bytes;
   }
 
   @Benchmark
   public byte[] fst() {
-    FST.asByteArray(LIST);
-    return FST.asByteArray(REQUEST);
+    byte[] bytes = FST.asByteArray(OBJ);
+    FST.asObject(bytes);
+    return bytes;
   }
 
   @Benchmark
   public byte[] hessian() throws Exception {
-    ByteArrayOutputStream os1 = new ByteArrayOutputStream();
-    Hessian2Output ho1 = new Hessian2Output(os1);
-    try {
-      ho1.writeObject(LIST);
-      ho1.flush();
-      os1.toByteArray();
-    } finally {
-      ho1.close();
-      os1.close();
-    }
+    byte[] bytes;
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     Hessian2Output ho = new Hessian2Output(os);
     try {
-      ho.writeObject(REQUEST);
+      ho.writeObject(OBJ);
       ho.flush();
-      return os.toByteArray();
+      bytes = os.toByteArray();
     } finally {
       ho.close();
       os.close();
     }
+
+    ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+    Hessian2Input hi = new Hessian2Input(in);
+    try {
+      hi.readObject();
+    } finally {
+      hi.close();
+      in.close();
+    }
+    return bytes;
   }
 
 }
