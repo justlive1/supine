@@ -60,13 +60,12 @@ public class JavassistInvoker implements Invoker {
     CtClass invokerClass = pool.makeClass(className);
     invokerClass.setInterfaces(new CtClass[]{pool.getCtClass(Invoker.class.getName())});
 
-    CtField targetField = new CtField(pool.get(target.getClass().getName()), "target",
-        invokerClass);
+    CtClass targetClass = pool.get(ClassUtils.getCglibActualClass(target.getClass()).getName());
+    CtField targetField = new CtField(targetClass, "target", invokerClass);
     targetField.setModifiers(Modifier.PRIVATE | Modifier.FINAL);
     invokerClass.addField(targetField);
 
-    CtConstructor constructor = new CtConstructor(
-        new CtClass[]{pool.get(target.getClass().getName())}, invokerClass);
+    CtConstructor constructor = new CtConstructor(new CtClass[]{targetClass}, invokerClass);
     constructor.setBody("{$0.target = $1;}");
     invokerClass.addConstructor(constructor);
 
@@ -85,7 +84,8 @@ public class JavassistInvoker implements Invoker {
     result(invokeMethod, result, method.getReturnType());
     invokeMethod.append(";\r\n}");
     invokerClass.addMethod(CtNewMethod.make(invokeMethod.toString(), invokerClass));
-    return (Invoker) invokerClass.toClass().getConstructor(target.getClass()).newInstance(target);
+    return (Invoker) invokerClass.toClass()
+        .getConstructor(ClassUtils.getCglibActualClass(target.getClass())).newInstance(target);
   }
 
   private void param(StringBuilder result, int index, Class<?> type) {
