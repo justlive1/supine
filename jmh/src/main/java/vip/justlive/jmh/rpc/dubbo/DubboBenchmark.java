@@ -32,14 +32,14 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import vip.justlive.jmh.bean.Objs;
 import vip.justlive.jmh.rpc.FooService;
-import vip.justlive.jmh.rpc.Objs;
 
 /**
  * @author wubo
  */
 @Fork(1)
-@Threads(4)
+@Threads(2)
 @Warmup(iterations = 3, time = 3)
 @Measurement(iterations = 3, time = 3)
 @BenchmarkMode(Mode.Throughput)
@@ -47,47 +47,58 @@ import vip.justlive.jmh.rpc.Objs;
 @State(Scope.Benchmark)
 public class DubboBenchmark {
 
-  private ClassPathXmlApplicationContext context;
+  private ClassPathXmlApplicationContext client;
+  private ClassPathXmlApplicationContext server;
   private FooService fooService;
+
+  public static void main(String[] args) throws RunnerException {
+    new Runner(new OptionsBuilder().include(DubboBenchmark.class.getSimpleName()).build()).run();
+  }
 
   @Setup
   public void setup() {
-    context = new ClassPathXmlApplicationContext("classpath*:dubbo-client.xml");
-    context.start();
-    fooService = context.getBean(FooService.class);
+    server = new ClassPathXmlApplicationContext(new String[]{"classpath*:dubbo-server.xml"});
+    server.start();
+    client = new ClassPathXmlApplicationContext("classpath*:dubbo-client.xml");
+    client.start();
+    fooService = client.getBean(FooService.class);
   }
 
   @TearDown
   public void tearDown() {
-    context.destroy();
+    client.destroy();
+    server.destroy();
   }
 
   @Benchmark
   public void empty() throws Exception {
     fooService.empty();
-    RpcContext.getContext().getFuture().get(15, TimeUnit.SECONDS);
+    RpcContext.getContext().getFuture()
+        .get(15, TimeUnit.SECONDS)
+    ;
   }
 
   @Benchmark
   public void str1k() throws Exception {
     fooService.str(Objs.str1k);
-    RpcContext.getContext().getFuture().get(15, TimeUnit.SECONDS);
+    RpcContext.getContext().getFuture()
+        .get(15, TimeUnit.SECONDS)
+    ;
   }
 
   @Benchmark
   public void str10k() throws Exception {
     fooService.str(Objs.str10k);
-    RpcContext.getContext().getFuture().get(15, TimeUnit.SECONDS);
+    RpcContext.getContext().getFuture()
+        .get(15, TimeUnit.SECONDS)
+    ;
   }
 
   @Benchmark
   public void obj() throws Exception {
     fooService.obj(Objs.person);
-    RpcContext.getContext().getFuture().get(15, TimeUnit.SECONDS);
-  }
-
-  public static void main(String[] args) throws RunnerException {
-    new Runner(new OptionsBuilder().include(DubboBenchmark.class.getSimpleName()).build())
-        .run();
+    RpcContext.getContext().getFuture()
+        .get(15, TimeUnit.SECONDS)
+    ;
   }
 }

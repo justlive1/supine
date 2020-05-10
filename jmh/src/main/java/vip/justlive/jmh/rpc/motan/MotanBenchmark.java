@@ -31,14 +31,14 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import vip.justlive.jmh.bean.Objs;
 import vip.justlive.jmh.rpc.FooServiceAsync;
-import vip.justlive.jmh.rpc.Objs;
 
 /**
  * @author wubo
  */
 @Fork(1)
-@Threads(4)
+@Threads(2)
 @Warmup(iterations = 3, time = 3)
 @Measurement(iterations = 3, time = 3)
 @BenchmarkMode(Mode.Throughput)
@@ -46,43 +46,54 @@ import vip.justlive.jmh.rpc.Objs;
 @State(Scope.Benchmark)
 public class MotanBenchmark {
 
-  private ClassPathXmlApplicationContext context;
+  private ClassPathXmlApplicationContext client;
+  private ClassPathXmlApplicationContext server;
   private FooServiceAsync fooService;
+
+  public static void main(String[] args) throws RunnerException {
+    new Runner(new OptionsBuilder().include(MotanBenchmark.class.getSimpleName()).build()).run();
+  }
 
   @Setup
   public void setup() {
-    context = new ClassPathXmlApplicationContext("classpath*:motan-client.xml");
-    context.start();
-    fooService = context.getBean(FooServiceAsync.class);
+    server = new ClassPathXmlApplicationContext("classpath*:motan-server.xml");
+    server.start();
+    client = new ClassPathXmlApplicationContext("classpath*:motan-client.xml");
+    client.start();
+    fooService = client.getBean(FooServiceAsync.class);
   }
 
   @TearDown
   public void tearDown() {
-    context.destroy();
+    client.destroy();
+    server.close();
   }
 
   @Benchmark
   public void empty() {
-    fooService.emptyAsync().getValue();
+    fooService.emptyAsync()
+            .getValue()
+    ;
   }
 
   @Benchmark
   public void str1k() {
-    fooService.strAsync(Objs.str1k).getValue();
+    fooService.strAsync(Objs.str1k)
+            .getValue()
+    ;
   }
 
   @Benchmark
   public void str10k() {
-    fooService.strAsync(Objs.str10k).getValue();
+    fooService.strAsync(Objs.str10k)
+            .getValue()
+    ;
   }
 
   @Benchmark
   public void obj() {
-    fooService.objAsync(Objs.person).getValue();
-  }
-
-  public static void main(String[] args) throws RunnerException {
-    new Runner(new OptionsBuilder().include(MotanBenchmark.class.getSimpleName()).build())
-        .run();
+    fooService.objAsync(Objs.person)
+            .getValue()
+    ;
   }
 }

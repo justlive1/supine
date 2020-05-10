@@ -29,6 +29,9 @@ import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
+import vip.justlive.jmh.bean.MethodBean;
+import vip.justlive.jmh.bean.Objs;
+import vip.justlive.jmh.bean.Person;
 import vip.justlive.supine.service.JavassistInvoker;
 
 /**
@@ -36,18 +39,19 @@ import vip.justlive.supine.service.JavassistInvoker;
  */
 @Fork(1)
 @Threads(1)
-@Warmup(iterations = 3, time = 3)
-@Measurement(iterations = 3, time = 3)
+@Warmup(iterations = 3, time = 1)
+@Measurement(iterations = 3, time = 1)
 @BenchmarkMode(Mode.Throughput)
-@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
 public class MethodBenchmark {
 
-  private long input;
+  private Person input;
   private MethodBean bean;
   private ReflectInvoker reflect;
   private CglibInvoker cglib;
   private JavassistInvoker javassist;
+  private MethodHandleInvoker methodHandle;
 
   public static void main(String[] args) throws Exception {
     new Runner(new OptionsBuilder().include(MethodBenchmark.class.getSimpleName()).build()).run();
@@ -56,12 +60,13 @@ public class MethodBenchmark {
 
   @Setup
   public void setup() throws NoSuchMethodException {
-    input = System.currentTimeMillis();
+    input = Objs.person;
     bean = new MethodBean();
-    Method method = bean.getClass().getMethod("test", long.class);
+    Method method = bean.getClass().getMethod("test", Person.class);
     reflect = new ReflectInvoker(bean, method);
     cglib = new CglibInvoker(bean, method);
     javassist = new JavassistInvoker(bean, method);
+    methodHandle = new MethodHandleInvoker(bean, method);
   }
 
   @Benchmark
@@ -82,6 +87,11 @@ public class MethodBenchmark {
   @Benchmark
   public void javassist() {
     javassist.invoke(new Object[]{input});
+  }
+
+  @Benchmark
+  public void methodHandle() {
+    methodHandle.invoke(new Object[]{input});
   }
 
 }

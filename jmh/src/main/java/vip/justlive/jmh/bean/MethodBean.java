@@ -12,14 +12,14 @@
  *  the License.
  */
 
-package vip.justlive.jmh.reflect;
+package vip.justlive.jmh.bean;
 
 /**
  * @author wubo
  */
 public class MethodBean {
 
-  public long test(long input) {
-    return -input;
+  public String test(Person input) {
+    return input.getName();
   }
 }
