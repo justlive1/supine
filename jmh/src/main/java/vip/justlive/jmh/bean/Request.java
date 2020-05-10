@@ -12,7 +12,7 @@
  *  the License.
  */
 
-package vip.justlive.jmh.serialize;
+package vip.justlive.jmh.bean;
 
 import java.io.Serializable;
 import java.util.Date;

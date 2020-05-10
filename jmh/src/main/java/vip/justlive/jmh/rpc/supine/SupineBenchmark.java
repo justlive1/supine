@@ -31,17 +31,21 @@ import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
+import vip.justlive.jmh.bean.Objs;
 import vip.justlive.jmh.rpc.FooService;
-import vip.justlive.jmh.rpc.Objs;
+import vip.justlive.jmh.rpc.FooServiceImpl;
+import vip.justlive.oxygen.core.util.ThreadUtils;
 import vip.justlive.supine.client.ReferenceFactory;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.common.ResultFuture;
+import vip.justlive.supine.common.ServiceConfig;
+import vip.justlive.supine.service.ServiceFactory;
 
 /**
  * @author wubo
  */
 @Fork(1)
-@Threads(4)
+@Threads(2)
 @Warmup(iterations = 3, time = 3)
 @Measurement(iterations = 3, time = 3)
 @BenchmarkMode(Mode.Throughput)
@@ -50,10 +54,20 @@ import vip.justlive.supine.common.ResultFuture;
 public class SupineBenchmark {
 
   private FooService fooService;
+  private ServiceFactory serviceFactory;
   private ReferenceFactory factory;
+
+  public static void main(String[] args) throws RunnerException {
+    new Runner(new OptionsBuilder().include(SupineBenchmark.class.getSimpleName()).build()).run();
+  }
 
   @Setup
   public void setup() throws IOException {
+
+    serviceFactory = new ServiceFactory(new ServiceConfig("localhost", 10082));
+    serviceFactory.register(new FooServiceImpl());
+    serviceFactory.start();
+
     ClientConfig config = new ClientConfig();
     config.setTimeout(10000);
     config.setAsync(true);
@@ -63,11 +77,15 @@ public class SupineBenchmark {
     fooService = factory.create(FooService.class);
 
     factory.start();
+
+    fooService.empty();
   }
 
   @TearDown
   public void tearDown() {
     factory.stop();
+    ThreadUtils.sleep(2000);
+    serviceFactory.stop();
   }
 
   @Benchmark
@@ -92,10 +110,5 @@ public class SupineBenchmark {
   public void obj() throws Throwable {
     fooService.obj(Objs.person);
     ResultFuture.future().get();
-  }
-
-  public static void main(String[] args) throws RunnerException {
-    new Runner(new OptionsBuilder().include(SupineBenchmark.class.getSimpleName()).build())
-        .run();
   }
 }

@@ -47,6 +47,7 @@ import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
+import vip.justlive.jmh.bean.Request;
 
 /**
  * @author wubo
@@ -74,7 +75,7 @@ public class SerializerBenchmark {
     }
 
     OBJ = build();
-//    OBJ = list;
+    OBJ = list;
     GSON = new Gson();
     OBJECT_MAPPER = new ObjectMapper();
     KRYO = new Kryo();
