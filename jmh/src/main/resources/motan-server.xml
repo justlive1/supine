@@ -25,7 +25,7 @@
 
   <motan:protocol id="benchmarkMotan" default="true" name="motan"
     requestTimeout="220" maxServerConnection="80000" maxContentLength="1048576"
-    maxWorkerThread="200" minWorkerThread="20"/>
+    maxWorkerThread="200" minWorkerThread="200"/>
 
   <motan:basicService requestTimeout="220" export="benchmarkMotan:10083"
     group="motan-benchmark-rpc" accessLog="false" shareChannel="true" module="motan-benchmark-rpc"

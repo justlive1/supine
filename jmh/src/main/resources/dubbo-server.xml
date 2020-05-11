@@ -23,7 +23,7 @@
 
   <dubbo:registry address="multicast://224.5.6.7:1234"/>
 
-  <dubbo:protocol name="dubbo" port="10081"/>
+  <dubbo:protocol name="dubbo" port="10081" threads="200"/>
 
   <bean id="fooService" class="vip.justlive.jmh.rpc.FooServiceImpl"/>
 
