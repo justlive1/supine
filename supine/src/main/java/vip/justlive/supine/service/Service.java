@@ -19,7 +19,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import vip.justlive.oxygen.core.util.Strings;
 
 /**
  * 服务接口标记注解
@@ -30,11 +29,11 @@ import vip.justlive.oxygen.core.util.Strings;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Service {
-
+  
   /**
    * 服务版本号
    *
    * @return version
    */
-  String version() default Strings.EMPTY;
+  String version() default "";
 }

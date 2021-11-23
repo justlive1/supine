@@ -17,8 +17,8 @@ package vip.justlive.supine.transport.impl;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import lombok.RequiredArgsConstructor;
-import vip.justlive.oxygen.core.net.aio.core.GroupContext;
-import vip.justlive.oxygen.core.net.aio.core.Server;
+import vip.justlive.oxygen.core.util.net.aio.GroupContext;
+import vip.justlive.oxygen.core.util.net.aio.Server;
 import vip.justlive.supine.codec.Serializer;
 import vip.justlive.supine.transport.ServerTransport;
 
@@ -29,10 +29,10 @@ import vip.justlive.supine.transport.ServerTransport;
  */
 @RequiredArgsConstructor
 public class AioServerTransport implements ServerTransport {
-
+  
   private final Serializer serializer;
   private Server server;
-
+  
   @Override
   public void start(InetSocketAddress address) throws IOException {
     ServerHandler handler = new ServerHandler(serializer);
@@ -40,12 +40,12 @@ public class AioServerTransport implements ServerTransport {
     server = new Server(groupContext);
     server.start(address);
   }
-
+  
   @Override
   public void stop() {
     if (server != null) {
       server.stop();
     }
   }
-
+  
 }

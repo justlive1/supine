@@ -20,9 +20,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import lombok.RequiredArgsConstructor;
-import vip.justlive.oxygen.core.net.aio.core.ChannelContext;
-import vip.justlive.oxygen.core.net.aio.core.Client;
-import vip.justlive.oxygen.core.net.aio.protocol.LengthFrame;
+import vip.justlive.oxygen.core.util.net.aio.ChannelContext;
+import vip.justlive.oxygen.core.util.net.aio.Client;
+import vip.justlive.oxygen.core.util.net.aio.LengthFrame;
 import vip.justlive.supine.codec.Serializer;
 import vip.justlive.supine.common.Request;
 import vip.justlive.supine.common.RequestKey;
@@ -36,11 +36,11 @@ import vip.justlive.supine.transport.ClientTransport;
  */
 @RequiredArgsConstructor
 public class AioClientTransport implements ClientTransport {
-
+  
   private final Client client;
   private final Serializer serializer;
   private ChannelContext channel;
-
+  
   @Override
   public void connect(InetSocketAddress address) throws IOException {
     this.channel = client.connect(address);
@@ -48,28 +48,31 @@ public class AioClientTransport implements ClientTransport {
     this.channel.addAttr(Transport.class.getName(), transport);
     try {
       transport.join(5, TimeUnit.SECONDS);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IOException(e);
+    } catch (ExecutionException | TimeoutException e) {
       throw new IOException(e);
     }
   }
-
+  
   @Override
   public void close() {
     if (channel != null) {
       channel.close();
     }
   }
-
+  
   @Override
   public boolean isClosed() {
     return channel == null || channel.isClosed();
   }
-
+  
   @Override
   public void send(Request request) {
     channel.write(new LengthFrame().setType(Transport.REQUEST).setBody(serializer.encode(request)));
   }
-
+  
   @Override
   public Integer lookup(RequestKey key) {
     if (isClosed()) {

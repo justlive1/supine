@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.Data;
-import vip.justlive.oxygen.core.util.SnowflakeIdWorker;
+import vip.justlive.oxygen.core.util.base.SnowflakeId;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.common.Request;
 import vip.justlive.supine.common.RequestKey;
@@ -35,20 +35,20 @@ import vip.justlive.supine.transport.ClientTransport;
  */
 @Data
 public class ReferenceProxy implements InvocationHandler {
-
+  
   private final ClientConfig config;
   private final Registry registry;
   private final String version;
   private final Map<Method, RequestKey> keys = new ConcurrentHashMap<>(4);
-
+  
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-
+    
     if (Object.class.equals(method.getDeclaringClass())) {
       return method.invoke(this, args);
     }
-
-    Request request = new Request().setId(SnowflakeIdWorker.defaultNextId()).setArgs(args);
+    
+    Request request = new Request().setId(SnowflakeId.defaultNextId()).setArgs(args);
     RequestKey key = keys.computeIfAbsent(method,
         k -> new RequestKey(version, k.getDeclaringClass().getName(), k.getName(),
             k.getParameterTypes()));
@@ -61,7 +61,7 @@ public class ReferenceProxy implements InvocationHandler {
       return sync(request, resultFuture, transport);
     }
   }
-
+  
   private Object sync(Request request, ResultFuture<?> resultFuture, ClientTransport transport)
       throws Throwable {
     ResultFuture.add(request.getId(), resultFuture);
@@ -72,7 +72,7 @@ public class ReferenceProxy implements InvocationHandler {
       ResultFuture.remove(request.getId());
     }
   }
-
+  
   private Object async(Request request, ResultFuture<?> resultFuture, ClientTransport transport) {
     ResultFuture.add(request.getId(), resultFuture);
     resultFuture.local();

@@ -15,7 +15,7 @@
 package vip.justlive.supine.common;
 
 import lombok.Getter;
-import vip.justlive.oxygen.core.util.SystemUtils;
+import vip.justlive.oxygen.core.util.base.SystemUtils;
 
 /**
  * 服务端配置
@@ -24,7 +24,7 @@ import vip.justlive.oxygen.core.util.SystemUtils;
  */
 @Getter
 public class ServiceConfig extends Config {
-
+  
   /**
    * 绑定主机
    */
@@ -33,11 +33,11 @@ public class ServiceConfig extends Config {
    * 绑定端口
    */
   private final int port;
-
+  
   public ServiceConfig(int port) {
     this(SystemUtils.getLocalAddress().getHostAddress(), port);
   }
-
+  
   public ServiceConfig(String host, int port) {
     this.host = host;
     this.port = port;

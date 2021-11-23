@@ -15,10 +15,10 @@
 package vip.justlive.supine;
 
 import java.io.IOException;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import vip.justlive.oxygen.core.exception.CodedException;
-import vip.justlive.oxygen.core.util.ThreadUtils;
+import vip.justlive.oxygen.core.util.concurrent.ThreadUtils;
 import vip.justlive.supine.client.ReferenceFactory;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.common.ResultFuture;
@@ -29,10 +29,10 @@ import vip.justlive.supine.service.ServiceFactory;
 /**
  * @author wubo
  */
-public class RpcTest {
-
+class RpcTest {
+  
   @Test
-  public void testLocal() {
+  void testLocal() {
     ServiceConfig serviceConfig = new ServiceConfig("localhost", 10086);
     ServiceFactory serviceFactory = new ServiceFactory(serviceConfig);
     registry(serviceFactory);
@@ -44,98 +44,98 @@ public class RpcTest {
       factory.start();
     } catch (IOException e) {
       e.printStackTrace();
-      Assert.fail();
+      Assertions.fail();
     }
-
+    
     Say say = factory.create(Say.class);
-
+    
     String msg = "say";
-    Assert.assertEquals(msg, say.hello(msg));
-
-    Assert.assertEquals(-12, say.test0(12));
-    Assert.assertEquals(new Integer(12), say.test1(12));
-    Assert.assertEquals(3L, say.test3());
+    Assertions.assertEquals(msg, say.hello(msg));
+    
+    Assertions.assertEquals(-12, say.test0(12));
+    Assertions.assertEquals(new Integer(12), say.test1(12));
+    Assertions.assertEquals(3L, say.test3());
     say.test2(3L, null);
-
+    
     System.out.println(say.hashCode());
-
+    
     Say say2 = factory.create(Say.class, "1");
-
+    
     try {
       say2.hello(msg);
-      Assert.fail();
+      Assertions.fail();
     } catch (CodedException e) {
       //ignore
       System.out.println(e);
     }
-
+    
     say2 = factory.create(Say.class, "2");
-    Assert.assertEquals("2:" + msg, say2.hello(msg));
-
+    Assertions.assertEquals("2:" + msg, say2.hello(msg));
+    
     ThreadUtils.sleep(1300);
     factory.stop();
   }
-
-//  @Test
-  public void testMulticast() throws Throwable {
+  
+  //    @Test
+  void testMulticast() throws Throwable {
     ClientConfig config = new ClientConfig();
     config.setAsync(true);
     ReferenceFactory factory = new ReferenceFactory(config, new MulticastRegistry(config));
     factory.start();
-
+    
     ServiceConfig serviceConfig = new ServiceConfig(10086);
     ServiceFactory serviceFactory = new ServiceFactory(serviceConfig,
         new MulticastRegistry(serviceConfig));
     registry(serviceFactory);
-
+    
     new Thread(() -> {
       ThreadUtils.sleep(3000);
       factory.stop();
     }).start();
-
+    
     ThreadUtils.sleep(2000);
-
+    
     Say say = factory.create(Say.class);
-
+    
     String msg = "say";
     say.hello(msg);
     ResultFuture<String> future = ResultFuture.future();
     future.setOnSuccess(System.out::println);
-
-    Assert.assertEquals(msg, future.get());
-
+    
+    Assertions.assertEquals(msg, future.get());
+    
     System.out.println(say.hashCode());
-
+    
     Say say2 = factory.create(Say.class, "1");
-
+    
     try {
       say2.hello(msg);
-      Assert.fail();
+      Assertions.fail();
     } catch (CodedException e) {
       //ignore
     }
-
+    
     say2 = factory.create(Say.class, "2");
     say2.hello(msg);
     future = ResultFuture.future();
-    Assert.assertEquals("2:" + msg, future.get());
-
+    Assertions.assertEquals("2:" + msg, future.get());
+    
     try {
       Thread.sleep(2000);
     } catch (InterruptedException e) {
-      Assert.fail();
+      Assertions.fail();
     }
     factory.stop();
   }
-
+  
   private void registry(ServiceFactory factory) {
     factory.register(new SayImpl());
     factory.register(new SayImpl2(), "2");
     try {
       factory.start();
     } catch (IOException e) {
-      Assert.fail();
+      Assertions.fail();
     }
   }
-
+  
 }

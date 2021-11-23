@@ -18,9 +18,9 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import vip.justlive.oxygen.core.exception.Exceptions;
-import vip.justlive.oxygen.core.util.MoreObjects;
-import vip.justlive.oxygen.core.util.Strings;
-import vip.justlive.oxygen.core.util.SystemUtils;
+import vip.justlive.oxygen.core.util.base.MoreObjects;
+import vip.justlive.oxygen.core.util.base.Strings;
+import vip.justlive.oxygen.core.util.base.SystemUtils;
 import vip.justlive.supine.codec.KryoSerializer;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.common.RequestKey;
@@ -32,9 +32,9 @@ import vip.justlive.supine.transport.ClientTransport;
  * @author wubo
  */
 public class LocalRegistry extends AbstractRegistry {
-
+  
   private final List<InetSocketAddress> socketAddresses = new ArrayList<>();
-
+  
   public LocalRegistry(ClientConfig config) {
     this.serializer = MoreObjects.firstNonNull(config.getSerializer(), KryoSerializer.INSTANCE);
     init(config);
@@ -42,17 +42,17 @@ public class LocalRegistry extends AbstractRegistry {
       socketAddresses.add(SystemUtils.parseAddress(address));
     }
   }
-
+  
   @Override
   public void register(List<RequestKey> keys) {
     // nothing
   }
-
+  
   @Override
   public void unregister(List<RequestKey> keys) {
     // nothing
   }
-
+  
   @Override
   public ClientTransport discovery(RequestKey key) {
     int size = socketAddresses.size();

@@ -18,10 +18,13 @@ import com.alibaba.fastjson.JSON;
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.FastInput;
-import com.esotericsoftware.kryo.io.FastOutput;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.util.DefaultInstantiatorStrategy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import de.javakaffee.kryoserializers.SynchronizedCollectionsSerializer;
+import de.javakaffee.kryoserializers.UnmodifiableCollectionsSerializer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,6 +36,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.nustaq.serialization.FSTConfiguration;
+import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -60,34 +64,39 @@ import vip.justlive.jmh.bean.Request;
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 public class SerializerBenchmark {
-
+  
   private static Object OBJ;
   private static final ObjectMapper OBJECT_MAPPER;
   private static final Gson GSON;
   private static final Kryo KRYO;
   private static final FSTConfiguration FST;
-
+  
   static {
-
+    
     List<Request> list = new ArrayList<>();
     for (int i = 0; i < 20; i++) {
       list.add(build());
     }
-
+    
     OBJ = build();
     OBJ = list;
     GSON = new Gson();
     OBJECT_MAPPER = new ObjectMapper();
     KRYO = new Kryo();
-    KRYO.setReferences(false);
+    KRYO.setReferences(true);
+    KRYO.setInstantiatorStrategy(new DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
+    KRYO.setRegistrationRequired(false);
+    UnmodifiableCollectionsSerializer.registerSerializers(KRYO);
+    SynchronizedCollectionsSerializer.registerSerializers(KRYO);
+    
     FST = FSTConfiguration.createDefaultConfiguration();
   }
-
+  
   public static void main(String[] args) throws RunnerException {
     new Runner(new OptionsBuilder().include(SerializerBenchmark.class.getSimpleName()).build())
         .run();
   }
-
+  
   static Request build() {
     Request request = new Request();
     request.setId(System.currentTimeMillis());
@@ -104,7 +113,7 @@ public class SerializerBenchmark {
         Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 19, 88, 86, 89, 90, 91, 92)));
     return request;
   }
-
+  
   @TearDown
   public void dataSize() throws Exception {
     System.out.println("data size:");
@@ -116,7 +125,7 @@ public class SerializerBenchmark {
     System.out.println("gson     " + gson().length);
     System.out.println("hessian  " + hessian().length);
   }
-
+  
   @Benchmark
   public byte[] jdk() throws Exception {
     byte[] bytes;
@@ -131,48 +140,48 @@ public class SerializerBenchmark {
     }
     return bytes;
   }
-
+  
   @Benchmark
   public byte[] fastjson() {
     byte[] bytes = JSON.toJSONBytes(OBJ);
     JSON.parse(bytes);
     return bytes;
   }
-
+  
   @Benchmark
   public byte[] jackson() throws IOException {
     byte[] bytes = OBJECT_MAPPER.writeValueAsBytes(OBJ);
     OBJECT_MAPPER.readValue(bytes, OBJ.getClass());
     return bytes;
   }
-
+  
   @Benchmark
   public byte[] gson() {
     byte[] bytes = GSON.toJson(OBJ).getBytes();
     GSON.fromJson(new String(bytes), OBJ.getClass());
     return bytes;
   }
-
+  
   @Benchmark
   public byte[] kryo() {
     byte[] bytes;
-    try (FastOutput output = new FastOutput(64, -1)) {
+    try (Output output = new Output(64, -1)) {
       KRYO.writeObject(output, OBJ);
       bytes = output.toBytes();
     }
-    try (FastInput input = new FastInput(bytes)) {
+    try (Input input = new Input(bytes)) {
       KRYO.readObject(input, OBJ.getClass());
     }
     return bytes;
   }
-
+  
   @Benchmark
   public byte[] fst() {
     byte[] bytes = FST.asByteArray(OBJ);
     FST.asObject(bytes);
     return bytes;
   }
-
+  
   @Benchmark
   public byte[] hessian() throws Exception {
     byte[] bytes;
@@ -186,7 +195,7 @@ public class SerializerBenchmark {
       ho.close();
       os.close();
     }
-
+    
     ByteArrayInputStream in = new ByteArrayInputStream(bytes);
     Hessian2Input hi = new Hessian2Input(in);
     try {
@@ -197,5 +206,5 @@ public class SerializerBenchmark {
     }
     return bytes;
   }
-
+  
 }

@@ -18,12 +18,11 @@ import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
 import vip.justlive.oxygen.core.exception.Exceptions;
-import vip.justlive.oxygen.core.util.ClassUtils;
-import vip.justlive.oxygen.core.util.MoreObjects;
-import vip.justlive.oxygen.core.util.Strings;
+import vip.justlive.oxygen.core.util.base.ClassUtils;
+import vip.justlive.oxygen.core.util.base.MoreObjects;
+import vip.justlive.oxygen.core.util.base.Pair;
+import vip.justlive.oxygen.core.util.base.Strings;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.registry.LocalRegistry;
 import vip.justlive.supine.registry.MulticastRegistry;
@@ -35,21 +34,21 @@ import vip.justlive.supine.registry.Registry;
  * @author wubo
  */
 public class ReferenceFactory {
-
-  private static final Map<Pair, Object> PROXIES = new HashMap<>(4);
+  
+  private static final Map<Pair<Class<?>, String>, Object> PROXIES = new HashMap<>(4);
   private final ClientConfig config;
   private final Registry registry;
   private volatile boolean state;
-
+  
   public ReferenceFactory(ClientConfig config) {
     this(config, select(config));
   }
-
+  
   public ReferenceFactory(ClientConfig config, Registry registry) {
     this.config = config;
     this.registry = registry;
   }
-
+  
   private static Registry select(ClientConfig config) {
     if (config.getRegistryType() == 1) {
       return new MulticastRegistry(config);
@@ -59,12 +58,12 @@ public class ReferenceFactory {
     }
     return new LocalRegistry(config);
   }
-
+  
   /**
    * 创建服务代理
    *
    * @param referenceType 需要创建的接口类
-   * @param <T> 接口类型
+   * @param <T>           接口类型
    * @return bean
    */
   public <T> T create(Class<T> referenceType) {
@@ -78,17 +77,18 @@ public class ReferenceFactory {
     }
     return create(referenceType, Strings.EMPTY);
   }
-
+  
   /**
    * 创建服务代理
    *
    * @param referenceType 需要创建的接口类
-   * @param version 服务版本
-   * @param <T> 接口类型
+   * @param version       服务版本
+   * @param <T>           接口类型
    * @return bean
    */
   public <T> T create(Class<T> referenceType, String version) {
-    Pair pair = new Pair(referenceType, version);
+    Pair<Class<?>, String> pair = new Pair<Class<?>, String>().setKey(referenceType)
+        .setValue(version);
     Object bean = PROXIES.get(pair);
     if (bean != null) {
       return referenceType.cast(bean);
@@ -99,7 +99,7 @@ public class ReferenceFactory {
     PROXIES.put(pair, obj);
     return obj;
   }
-
+  
   /**
    * 启动
    *
@@ -114,7 +114,7 @@ public class ReferenceFactory {
       registry.start();
     }
   }
-
+  
   /**
    * 停止
    */
@@ -128,13 +128,5 @@ public class ReferenceFactory {
       registry.stop();
     }
   }
-
-  @EqualsAndHashCode
-  @RequiredArgsConstructor
-  private static class Pair {
-
-    final Class<?> clazz;
-    final String version;
-
-  }
+  
 }

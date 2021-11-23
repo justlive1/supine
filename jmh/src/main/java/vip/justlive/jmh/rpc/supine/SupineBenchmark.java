@@ -34,7 +34,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import vip.justlive.jmh.bean.Objs;
 import vip.justlive.jmh.rpc.FooService;
 import vip.justlive.jmh.rpc.FooServiceImpl;
-import vip.justlive.oxygen.core.util.ThreadUtils;
+import vip.justlive.oxygen.core.util.concurrent.ThreadUtils;
 import vip.justlive.supine.client.ReferenceFactory;
 import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.common.ResultFuture;
@@ -52,60 +52,60 @@ import vip.justlive.supine.service.ServiceFactory;
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 public class SupineBenchmark {
-
+  
   private FooService fooService;
   private ServiceFactory serviceFactory;
   private ReferenceFactory factory;
-
+  
   public static void main(String[] args) throws RunnerException {
     new Runner(new OptionsBuilder().include(SupineBenchmark.class.getSimpleName()).build()).run();
   }
-
+  
   @Setup
   public void setup() throws IOException {
-
+    
     serviceFactory = new ServiceFactory(new ServiceConfig("localhost", 10082));
     serviceFactory.register(new FooServiceImpl());
     serviceFactory.start();
-
+    
     ClientConfig config = new ClientConfig();
     config.setTimeout(10000);
     config.setAsync(true);
     config.setRegistryAddress("localhost:10082");
-
+    
     factory = new ReferenceFactory(config);
     fooService = factory.create(FooService.class);
-
+    
     factory.start();
-
+    
     fooService.empty();
   }
-
+  
   @TearDown
   public void tearDown() {
     factory.stop();
     ThreadUtils.sleep(2000);
     serviceFactory.stop();
   }
-
+  
   @Benchmark
   public void empty() throws Throwable {
     fooService.empty();
     ResultFuture.future().get();
   }
-
+  
   @Benchmark
   public void str1k() throws Throwable {
     fooService.str(Objs.str1k);
     ResultFuture.future().get();
   }
-
+  
   @Benchmark
   public void str10k() throws Throwable {
     fooService.str(Objs.str10k);
     ResultFuture.future().get();
   }
-
+  
   @Benchmark
   public void obj() throws Throwable {
     fooService.obj(Objs.person);

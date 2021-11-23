@@ -18,10 +18,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import vip.justlive.oxygen.core.exception.Exceptions;
 import vip.justlive.oxygen.core.exception.WrappedException;
-import vip.justlive.oxygen.core.net.aio.core.AioListener;
-import vip.justlive.oxygen.core.net.aio.core.ChannelContext;
-import vip.justlive.oxygen.core.net.aio.protocol.LengthFrame;
-import vip.justlive.oxygen.core.net.aio.protocol.LengthFrameHandler;
+import vip.justlive.oxygen.core.util.net.aio.AioListener;
+import vip.justlive.oxygen.core.util.net.aio.ChannelContext;
+import vip.justlive.oxygen.core.util.net.aio.LengthFrame;
+import vip.justlive.oxygen.core.util.net.aio.LengthFrameHandler;
 import vip.justlive.supine.codec.Serializer;
 import vip.justlive.supine.common.Request;
 import vip.justlive.supine.common.RequestKeyWrapper;
@@ -36,15 +36,15 @@ import vip.justlive.supine.service.ServiceMethodInvoker;
 @Slf4j
 @RequiredArgsConstructor
 public class ServerHandler extends LengthFrameHandler implements AioListener {
-
+  
   private final Serializer serializer;
-
+  
   @Override
   public void onConnected(ChannelContext channelContext) {
     channelContext.write(new LengthFrame().setType(Transport.ENDPOINT)
         .setBody(serializer.encode(new RequestKeyWrapper(ServiceMethodInvoker.requestKeys()))));
   }
-
+  
   @Override
   public void handle(Object data, ChannelContext channelContext) {
     LengthFrame frame = (LengthFrame) data;
@@ -61,12 +61,10 @@ public class ServerHandler extends LengthFrameHandler implements AioListener {
     } else {
       try {
         response.setResult(invoker.invoke(request.getArgs()));
+      } catch (WrappedException e) {
+        response.setException(e.getException());
       } catch (Throwable e) {
-        if (e instanceof WrappedException) {
-          response.setException(((WrappedException) e).getException());
-        } else {
-          response.setException(e);
-        }
+        response.setException(e);
       }
     }
     channelContext

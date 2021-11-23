@@ -15,10 +15,11 @@
 package vip.justlive.supine.codec;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.Kryo.DefaultInstantiatorStrategy;
-import com.esotericsoftware.kryo.io.FastInput;
-import com.esotericsoftware.kryo.io.FastOutput;
-import com.esotericsoftware.kryo.pool.KryoPool;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.util.DefaultInstantiatorStrategy;
+import com.esotericsoftware.kryo.util.Pool;
+import de.javakaffee.kryoserializers.SynchronizedCollectionsSerializer;
 import de.javakaffee.kryoserializers.UnmodifiableCollectionsSerializer;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 
@@ -28,37 +29,41 @@ import org.objenesis.strategy.StdInstantiatorStrategy;
  * @author wubo
  */
 public class KryoSerializer implements Serializer {
-
+  
   public static final KryoSerializer INSTANCE = new KryoSerializer();
-
-  private final KryoPool pool = new KryoPool.Builder(this::create).softReferences().build();
-
-  private Kryo create() {
-    Kryo kryo = new Kryo();
-    kryo.setReferences(true);
-    kryo.setInstantiatorStrategy(new DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
-    kryo.setRegistrationRequired(false);
-    UnmodifiableCollectionsSerializer.registerSerializers(kryo);
-    return kryo;
-  }
-
+  
+  private final Pool<Kryo> pool = new Pool<Kryo>(true, true, 16) {
+    @Override
+    protected Kryo create() {
+      Kryo kryo = new Kryo();
+      kryo.setReferences(true);
+      kryo.setInstantiatorStrategy(new DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
+      kryo.setRegistrationRequired(false);
+      UnmodifiableCollectionsSerializer.registerSerializers(kryo);
+      SynchronizedCollectionsSerializer.registerSerializers(kryo);
+      return kryo;
+    }
+  };
+  
   @Override
   public byte[] encode(Object obj) {
-    return pool.run(kryo -> {
-      try (FastOutput output = new FastOutput(64, -1)) {
-        kryo.writeClassAndObject(output, obj);
-        return output.toBytes();
-      }
-    });
+    Kryo kryo = pool.obtain();
+    try (Output output = new Output(64, -1)) {
+      kryo.writeClassAndObject(output, obj);
+      return output.toBytes();
+    } finally {
+      pool.free(kryo);
+    }
   }
-
-
+  
+  
   @Override
   public Object decode(byte[] bytes) {
-    return pool.run(kryo -> {
-      try (FastInput input = new FastInput(bytes)) {
-        return kryo.readClassAndObject(input);
-      }
-    });
+    Kryo kryo = pool.obtain();
+    try (Input input = new Input(bytes)) {
+      return kryo.readClassAndObject(input);
+    } finally {
+      pool.free(kryo);
+    }
   }
 }

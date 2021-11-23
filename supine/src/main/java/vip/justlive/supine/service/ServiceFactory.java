@@ -17,9 +17,9 @@ package vip.justlive.supine.service;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import vip.justlive.oxygen.core.exception.Exceptions;
-import vip.justlive.oxygen.core.util.ClassUtils;
-import vip.justlive.oxygen.core.util.MoreObjects;
-import vip.justlive.oxygen.core.util.Strings;
+import vip.justlive.oxygen.core.util.base.ClassUtils;
+import vip.justlive.oxygen.core.util.base.MoreObjects;
+import vip.justlive.oxygen.core.util.base.Strings;
 import vip.justlive.supine.codec.KryoSerializer;
 import vip.justlive.supine.common.RequestKey;
 import vip.justlive.supine.common.ServiceConfig;
@@ -34,44 +34,44 @@ import vip.justlive.supine.transport.impl.AioServerTransport;
  * @author wubo
  */
 public class ServiceFactory {
-
+  
   private final ServiceConfig config;
   private final Registry registry;
-
+  
   private ServerTransport transport;
   private volatile boolean state;
-
+  
   public ServiceFactory(ServiceConfig config) {
     this(config, select(config));
   }
-
+  
   public ServiceFactory(ServiceConfig config, Registry registry) {
     this.config = config;
     this.registry = registry;
   }
-
+  
   private static Registry select(ServiceConfig config) {
     if (config.getRegistryType() == 1) {
       return new MulticastRegistry(config);
     }
     return null;
   }
-
+  
   /**
    * 注册服务
    *
    * @param service 服务实现
    */
   public void register(Object service) {
-    Service annotation = ClassUtils
-        .getAnnotation(ClassUtils.getCglibActualClass(service.getClass()), Service.class);
+    Service annotation = ClassUtils.getAnnotation(ClassUtils.getActualClass(service.getClass()),
+        Service.class);
     if (annotation != null) {
       register(service, annotation.version());
     } else {
       register(service, Strings.EMPTY);
     }
   }
-
+  
   /**
    * 注册服务
    *
@@ -91,23 +91,23 @@ public class ServiceFactory {
       register(intf, service, version);
     }
   }
-
+  
   /**
    * 注册服务，指定接口
    *
    * @param interfaceType 接口类型
-   * @param service 服务实现
+   * @param service       服务实现
    */
   public void register(Class<?> interfaceType, Object service) {
     register(interfaceType, service, Strings.EMPTY);
   }
-
+  
   /**
    * 注册服务，指定接口和版本
    *
    * @param interfaceType 接口类型
-   * @param service 服务实现
-   * @param version 版本
+   * @param service       服务实现
+   * @param version       版本
    */
   public void register(Class<?> interfaceType, Object service, String version) {
     Method[] methods = interfaceType.getDeclaredMethods();
@@ -125,7 +125,7 @@ public class ServiceFactory {
       throw Exceptions.wrap(e);
     }
   }
-
+  
   /**
    * 启动
    *
@@ -144,7 +144,7 @@ public class ServiceFactory {
       registry.start();
     }
   }
-
+  
   /**
    * 停止
    */

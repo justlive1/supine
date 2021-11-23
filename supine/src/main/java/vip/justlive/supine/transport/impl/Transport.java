@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import lombok.RequiredArgsConstructor;
-import vip.justlive.oxygen.core.net.aio.core.ChannelContext;
+import vip.justlive.oxygen.core.util.net.aio.ChannelContext;
 
 /**
  * 传输工具类
@@ -28,15 +28,15 @@ import vip.justlive.oxygen.core.net.aio.core.ChannelContext;
  */
 @RequiredArgsConstructor
 public class Transport {
-
+  
   public static final int BEAT = -1;
   public static final int REQUEST = 1;
   public static final int RESPONSE = 2;
   public static final int ENDPOINT = 3;
-
+  
   private final ChannelContext channel;
   private final CompletableFuture<Void> future = new CompletableFuture<>();
-
+  
   public void join(long timeout, TimeUnit unit)
       throws InterruptedException, ExecutionException, TimeoutException {
     if (channel != null) {
@@ -44,7 +44,7 @@ public class Transport {
     }
     future.get(timeout, unit);
   }
-
+  
   public void complete() {
     future.complete(null);
   }

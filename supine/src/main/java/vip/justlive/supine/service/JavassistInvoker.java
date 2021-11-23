@@ -26,7 +26,7 @@ import javassist.CtNewMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import vip.justlive.oxygen.core.exception.Exceptions;
-import vip.justlive.oxygen.core.util.ClassUtils;
+import vip.justlive.oxygen.core.util.base.ClassUtils;
 
 /**
  * Javassist
@@ -34,12 +34,12 @@ import vip.justlive.oxygen.core.util.ClassUtils;
  * @author wubo
  */
 public class JavassistInvoker implements Invoker {
-
+  
   private static final String CLASS_NAME = "vip.justlive.supine.service.Invoker_%s_%s";
   private static final AtomicInteger COUNT = new AtomicInteger();
-
+  
   private final Invoker invoker;
-
+  
   public JavassistInvoker(Object target, Method method) {
     try {
       this.invoker = createClass(target, method);
@@ -47,31 +47,31 @@ public class JavassistInvoker implements Invoker {
       throw Exceptions.wrap(e);
     }
   }
-
+  
   @Override
   public Object invoke(Object[] args) {
     return invoker.invoke(args);
   }
-
+  
   private Invoker createClass(Object target, Method method)
       throws NotFoundException, CannotCompileException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
     String className = String.format(CLASS_NAME, method.getName(), COUNT.getAndIncrement());
     ClassPool pool = ClassPool.getDefault();
     CtClass invokerClass = pool.makeClass(className);
     invokerClass.setInterfaces(new CtClass[]{pool.getCtClass(Invoker.class.getName())});
-
-    CtClass targetClass = pool.get(ClassUtils.getCglibActualClass(target.getClass()).getName());
+    
+    CtClass targetClass = pool.get(ClassUtils.getActualClass(target.getClass()).getName());
     CtField targetField = new CtField(targetClass, "target", invokerClass);
     targetField.setModifiers(Modifier.PRIVATE | Modifier.FINAL);
     invokerClass.addField(targetField);
-
+    
     CtConstructor constructor = new CtConstructor(new CtClass[]{targetClass}, invokerClass);
     constructor.setBody("{$0.target = $1;}");
     invokerClass.addConstructor(constructor);
-
+    
     StringBuilder invokeMethod = new StringBuilder();
     invokeMethod.append("public Object invoke(Object[] args) {\r\n");
-
+    
     StringBuilder result = new StringBuilder("target.").append(method.getName()).append("(");
     Class<?>[] params = method.getParameterTypes();
     for (int i = 0; i < params.length; i++) {
@@ -85,9 +85,9 @@ public class JavassistInvoker implements Invoker {
     invokeMethod.append(";\r\n}");
     invokerClass.addMethod(CtNewMethod.make(invokeMethod.toString(), invokerClass));
     return (Invoker) invokerClass.toClass()
-        .getConstructor(ClassUtils.getCglibActualClass(target.getClass())).newInstance(target);
+        .getConstructor(ClassUtils.getActualClass(target.getClass())).newInstance(target);
   }
-
+  
   private void param(StringBuilder result, int index, Class<?> type) {
     result.append("((").append(ClassUtils.wrap(type).getName()).append(")").append("args[")
         .append(index).append("])");
@@ -95,7 +95,7 @@ public class JavassistInvoker implements Invoker {
       result.append(".").append(type.getName()).append("Value()");
     }
   }
-
+  
   private void result(StringBuilder invokeMethod, StringBuilder result, Class<?> type) {
     String str = result.toString();
     if (ClassUtils.allPrimitiveTypes().contains(type) && type != void.class) {
@@ -107,5 +107,5 @@ public class JavassistInvoker implements Invoker {
       invokeMethod.append("return ").append(str);
     }
   }
-
+  
 }
