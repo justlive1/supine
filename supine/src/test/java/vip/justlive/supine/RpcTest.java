@@ -29,10 +29,10 @@ import vip.justlive.supine.service.ServiceFactory;
 /**
  * @author wubo
  */
-class RpcTest {
-  
+public class RpcTest {
+
   @Test
-  void testLocal() {
+  public void testLocal() {
     ServiceConfig serviceConfig = new ServiceConfig("localhost", 10086);
     ServiceFactory serviceFactory = new ServiceFactory(serviceConfig);
     registry(serviceFactory);
@@ -46,21 +46,21 @@ class RpcTest {
       e.printStackTrace();
       Assertions.fail();
     }
-    
+
     Say say = factory.create(Say.class);
-    
+
     String msg = "say";
     Assertions.assertEquals(msg, say.hello(msg));
-    
+
     Assertions.assertEquals(-12, say.test0(12));
     Assertions.assertEquals(new Integer(12), say.test1(12));
     Assertions.assertEquals(3L, say.test3());
     say.test2(3L, null);
-    
+
     System.out.println(say.hashCode());
-    
+
     Say say2 = factory.create(Say.class, "1");
-    
+
     try {
       say2.hello(msg);
       Assertions.fail();
@@ -68,58 +68,58 @@ class RpcTest {
       //ignore
       System.out.println(e);
     }
-    
+
     say2 = factory.create(Say.class, "2");
     Assertions.assertEquals("2:" + msg, say2.hello(msg));
-    
+
     ThreadUtils.sleep(1300);
     factory.stop();
   }
-  
-  //    @Test
-  void testMulticast() throws Throwable {
+
+  //  @Test
+  public void testMulticast() throws Throwable {
     ClientConfig config = new ClientConfig();
     config.setAsync(true);
     ReferenceFactory factory = new ReferenceFactory(config, new MulticastRegistry(config));
     factory.start();
-    
+
     ServiceConfig serviceConfig = new ServiceConfig(10086);
     ServiceFactory serviceFactory = new ServiceFactory(serviceConfig,
         new MulticastRegistry(serviceConfig));
     registry(serviceFactory);
-    
+
     new Thread(() -> {
       ThreadUtils.sleep(3000);
       factory.stop();
     }).start();
-    
+
     ThreadUtils.sleep(2000);
-    
+
     Say say = factory.create(Say.class);
-    
+
     String msg = "say";
     say.hello(msg);
     ResultFuture<String> future = ResultFuture.future();
     future.setOnSuccess(System.out::println);
-    
+
     Assertions.assertEquals(msg, future.get());
-    
+
     System.out.println(say.hashCode());
-    
+
     Say say2 = factory.create(Say.class, "1");
-    
+
     try {
       say2.hello(msg);
       Assertions.fail();
     } catch (CodedException e) {
       //ignore
     }
-    
+
     say2 = factory.create(Say.class, "2");
     say2.hello(msg);
     future = ResultFuture.future();
     Assertions.assertEquals("2:" + msg, future.get());
-    
+
     try {
       Thread.sleep(2000);
     } catch (InterruptedException e) {
@@ -127,7 +127,7 @@ class RpcTest {
     }
     factory.stop();
   }
-  
+
   private void registry(ServiceFactory factory) {
     factory.register(new SayImpl());
     factory.register(new SayImpl2(), "2");
@@ -137,5 +137,5 @@ class RpcTest {
       Assertions.fail();
     }
   }
-  
+
 }
