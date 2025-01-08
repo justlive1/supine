@@ -25,6 +25,7 @@ import vip.justlive.supine.common.RequestKey;
 import vip.justlive.supine.common.ServiceConfig;
 import vip.justlive.supine.registry.MulticastRegistry;
 import vip.justlive.supine.registry.Registry;
+import vip.justlive.supine.registry.ReverseRegistry;
 import vip.justlive.supine.transport.ServerTransport;
 import vip.justlive.supine.transport.impl.AioServerTransport;
 
@@ -34,29 +35,32 @@ import vip.justlive.supine.transport.impl.AioServerTransport;
  * @author wubo
  */
 public class ServiceFactory {
-  
+
   private final ServiceConfig config;
   private final Registry registry;
-  
+
   private ServerTransport transport;
   private volatile boolean state;
-  
+
   public ServiceFactory(ServiceConfig config) {
     this(config, select(config));
   }
-  
+
   public ServiceFactory(ServiceConfig config, Registry registry) {
     this.config = config;
     this.registry = registry;
   }
-  
+
   private static Registry select(ServiceConfig config) {
     if (config.getRegistryType() == 1) {
       return new MulticastRegistry(config);
     }
+    if (config.getRegistryType() == 2) {
+      return new ReverseRegistry(config);
+    }
     return null;
   }
-  
+
   /**
    * 注册服务
    *
@@ -71,7 +75,7 @@ public class ServiceFactory {
       register(service, Strings.EMPTY);
     }
   }
-  
+
   /**
    * 注册服务
    *
@@ -81,9 +85,6 @@ public class ServiceFactory {
   public void register(Object service, String version) {
     Class<?> serviceType = service.getClass();
     Class<?>[] interfaces = serviceType.getInterfaces();
-    if (interfaces.length == 0) {
-      return;
-    }
     for (Class<?> intf : interfaces) {
       if (intf.getClassLoader() != null && intf.getName().startsWith("java.")) {
         continue;
@@ -91,7 +92,7 @@ public class ServiceFactory {
       register(intf, service, version);
     }
   }
-  
+
   /**
    * 注册服务，指定接口
    *
@@ -101,7 +102,7 @@ public class ServiceFactory {
   public void register(Class<?> interfaceType, Object service) {
     register(interfaceType, service, Strings.EMPTY);
   }
-  
+
   /**
    * 注册服务，指定接口和版本
    *
@@ -125,7 +126,7 @@ public class ServiceFactory {
       throw Exceptions.wrap(e);
     }
   }
-  
+
   /**
    * 启动
    *
@@ -144,7 +145,7 @@ public class ServiceFactory {
       registry.start();
     }
   }
-  
+
   /**
    * 停止
    */

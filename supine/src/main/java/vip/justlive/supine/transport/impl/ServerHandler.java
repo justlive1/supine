@@ -36,15 +36,17 @@ import vip.justlive.supine.service.ServiceMethodInvoker;
 @Slf4j
 @RequiredArgsConstructor
 public class ServerHandler extends LengthFrameHandler implements AioListener {
-  
+
   private final Serializer serializer;
-  
+
   @Override
   public void onConnected(ChannelContext channelContext) {
+    RequestKeyWrapper requestKeyWrapper = new RequestKeyWrapper(ServiceMethodInvoker.requestKeys());
+    log.info("server send endpoint to client {}", requestKeyWrapper);
     channelContext.write(new LengthFrame().setType(Transport.ENDPOINT)
-        .setBody(serializer.encode(new RequestKeyWrapper(ServiceMethodInvoker.requestKeys()))));
+        .setBody(serializer.encode(requestKeyWrapper)));
   }
-  
+
   @Override
   public void handle(Object data, ChannelContext channelContext) {
     LengthFrame frame = (LengthFrame) data;
@@ -67,7 +69,7 @@ public class ServerHandler extends LengthFrameHandler implements AioListener {
         response.setException(e);
       }
     }
-    channelContext
-        .write(new LengthFrame().setType(Transport.RESPONSE).setBody(serializer.encode(response)));
+    channelContext.write(
+        new LengthFrame().setType(Transport.RESPONSE).setBody(serializer.encode(response)));
   }
 }

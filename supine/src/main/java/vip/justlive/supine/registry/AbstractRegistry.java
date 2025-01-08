@@ -41,33 +41,33 @@ import vip.justlive.supine.transport.impl.ClientHandler;
  */
 @Slf4j
 public abstract class AbstractRegistry implements Registry {
-  
-  private static final Random RANDOM = new Random();
+
+  static final Random RANDOM = new Random();
   protected Serializer serializer;
   private ExpiringMap<InetSocketAddress, ClientTransport> transports;
   private Client client;
-  
+
   @Override
   public void start() throws IOException {
     GroupContext groupContext = new GroupContext(new ClientHandler(serializer));
     groupContext.setDaemon(true);
     client = new Client(groupContext);
   }
-  
+
   @Override
   public void stop() {
     if (client != null) {
       client.close();
     }
   }
-  
+
   void init(ClientConfig config) {
     this.transports = ExpiringMap.<InetSocketAddress, ClientTransport>builder()
         .expiration(config.getIdleTimeout(), TimeUnit.SECONDS)
         .expiringPolicy(ExpiringPolicy.ACCESSED).scheduleDelay(config.getIdleTimeout())
         .asyncExpiredListeners(this::expired).build();
   }
-  
+
   ClientTransport load(List<InetSocketAddress> addresses, RequestKey key) {
     int size = addresses.size();
     int index = RANDOM.nextInt(size);
@@ -75,7 +75,7 @@ public abstract class AbstractRegistry implements Registry {
     for (int i = 0; i < size; i++) {
       InetSocketAddress address = addresses.get(index);
       ClientTransport transport = get(address, reference);
-      index = (index + 1) % addresses.size();
+      index = (index + 1) % size;
       if (transport != null && !transport.isClosed() && transport.lookup(key) != null) {
         return transport;
       }
@@ -85,7 +85,7 @@ public abstract class AbstractRegistry implements Registry {
     }
     throw Exceptions.fail("远程服务不可用");
   }
-  
+
   private synchronized ClientTransport get(InetSocketAddress address,
       AtomicReference<Exception> reference) {
     ClientTransport transport = transports.get(address);
@@ -103,7 +103,7 @@ public abstract class AbstractRegistry implements Registry {
     }
     return null;
   }
-  
+
   private void expired(InetSocketAddress address, ClientTransport transport, RemovalCause cause) {
     if (log.isDebugEnabled()) {
       log.debug("[{}]连接失效[{}]，关闭连接", cause, address);

@@ -36,11 +36,11 @@ import vip.justlive.supine.transport.ClientTransport;
  */
 @RequiredArgsConstructor
 public class AioClientTransport implements ClientTransport {
-  
+
   private final Client client;
   private final Serializer serializer;
-  private ChannelContext channel;
-  
+  protected ChannelContext channel;
+
   @Override
   public void connect(InetSocketAddress address) throws IOException {
     this.channel = client.connect(address);
@@ -55,24 +55,24 @@ public class AioClientTransport implements ClientTransport {
       throw new IOException(e);
     }
   }
-  
+
   @Override
   public void close() {
     if (channel != null) {
       channel.close();
     }
   }
-  
+
   @Override
   public boolean isClosed() {
     return channel == null || channel.isClosed();
   }
-  
+
   @Override
   public void send(Request request) {
     channel.write(new LengthFrame().setType(Transport.REQUEST).setBody(serializer.encode(request)));
   }
-  
+
   @Override
   public Integer lookup(RequestKey key) {
     if (isClosed()) {

@@ -17,12 +17,14 @@ package vip.justlive.supine.common;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.ToString;
 
 /**
  * request Key wrapper
  *
  * @author wubo
  */
+@ToString
 public class RequestKeyWrapper {
 
   private final Map<RequestKey, Integer> keys;

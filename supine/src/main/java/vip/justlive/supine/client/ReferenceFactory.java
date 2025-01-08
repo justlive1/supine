@@ -27,6 +27,7 @@ import vip.justlive.supine.common.ClientConfig;
 import vip.justlive.supine.registry.LocalRegistry;
 import vip.justlive.supine.registry.MulticastRegistry;
 import vip.justlive.supine.registry.Registry;
+import vip.justlive.supine.registry.ReverseRegistry;
 
 /**
  * 客户端服务工厂
@@ -34,21 +35,21 @@ import vip.justlive.supine.registry.Registry;
  * @author wubo
  */
 public class ReferenceFactory {
-  
+
   private static final Map<Pair<Class<?>, String>, Object> PROXIES = new HashMap<>(4);
   private final ClientConfig config;
   private final Registry registry;
   private volatile boolean state;
-  
+
   public ReferenceFactory(ClientConfig config) {
     this(config, select(config));
   }
-  
+
   public ReferenceFactory(ClientConfig config, Registry registry) {
     this.config = config;
     this.registry = registry;
   }
-  
+
   private static Registry select(ClientConfig config) {
     if (config.getRegistryType() == 1) {
       return new MulticastRegistry(config);
@@ -56,9 +57,12 @@ public class ReferenceFactory {
     if (config.getRegistryAddress() == null || config.getRegistryAddress().trim().isEmpty()) {
       throw Exceptions.fail("[registryAddress]不正确");
     }
+    if (config.getRegistryType() == 2) {
+      return new ReverseRegistry(config);
+    }
     return new LocalRegistry(config);
   }
-  
+
   /**
    * 创建服务代理
    *
@@ -77,7 +81,7 @@ public class ReferenceFactory {
     }
     return create(referenceType, Strings.EMPTY);
   }
-  
+
   /**
    * 创建服务代理
    *
@@ -99,7 +103,7 @@ public class ReferenceFactory {
     PROXIES.put(pair, obj);
     return obj;
   }
-  
+
   /**
    * 启动
    *
@@ -114,7 +118,7 @@ public class ReferenceFactory {
       registry.start();
     }
   }
-  
+
   /**
    * 停止
    */
@@ -128,5 +132,5 @@ public class ReferenceFactory {
       registry.stop();
     }
   }
-  
+
 }

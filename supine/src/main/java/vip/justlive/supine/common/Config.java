@@ -33,7 +33,7 @@ public class Config {
   private int timeout = 5;
 
   /**
-   * 注册类型，0：直连
+   * 注册类型，0：直连, 1:multicast，2：反向注册
    */
   private int registryType = 0;
   /**

@@ -15,6 +15,7 @@
 package vip.justlive.supine;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vip.justlive.oxygen.core.exception.CodedException;
@@ -43,7 +44,6 @@ public class RpcTest {
     try {
       factory.start();
     } catch (IOException e) {
-      e.printStackTrace();
       Assertions.fail();
     }
 
@@ -136,6 +136,61 @@ public class RpcTest {
     } catch (IOException e) {
       Assertions.fail();
     }
+  }
+
+  @Test
+  public void testReverse() {
+
+    ClientConfig config = new ClientConfig();
+    config.setIdleTimeout(120);
+    config.setRegistryType(2);
+    config.setRegistryAddress("localhost:9099");
+    ReferenceFactory factory = new ReferenceFactory(config);
+    try {
+      factory.start();
+    } catch (IOException e) {
+      Assertions.fail();
+    }
+
+    ThreadUtils.sleep(1000);
+
+    ServiceConfig serviceConfig = new ServiceConfig("localhost", 10087);
+    serviceConfig.setRegistryType(2);
+    serviceConfig.setRegistryAddress("localhost:9099");
+    ServiceFactory serviceFactory = new ServiceFactory(serviceConfig);
+    registry(serviceFactory);
+
+
+    ThreadUtils.sleep(1, TimeUnit.SECONDS);
+
+    Say say = factory.create(Say.class);
+
+    String msg = "say";
+    Assertions.assertEquals(msg, say.hello(msg));
+
+    Assertions.assertEquals(-12, say.test0(12));
+    Assertions.assertEquals(new Integer(12), say.test1(12));
+    Assertions.assertEquals(3L, say.test3());
+    say.test2(3L, null);
+
+    System.out.println(say.hashCode());
+
+    Say say2 = factory.create(Say.class, "1");
+
+    try {
+      say2.hello(msg);
+      Assertions.fail();
+    } catch (CodedException e) {
+      //ignore
+      System.out.println(e);
+    }
+
+    say2 = factory.create(Say.class, "2");
+    Assertions.assertEquals("2:" + msg, say2.hello(msg));
+
+    ThreadUtils.sleep(1300);
+    factory.stop();
+
   }
 
 }
